@@ -5,11 +5,11 @@
     "icons": [
       {
         "src": "BMS.png",
-        "sizes": "200x200",
+        "sizes": "300x300",
         "type": "image/png"
       }
     ],
-    "start_url": "index.html",
+    "start_url": "https://bibo-technologies.github.io/BMS/",
     "display": "standalone",
     "background_color": "green",
     "theme_color": "green"
