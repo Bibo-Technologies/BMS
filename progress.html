@@ -17,8 +17,11 @@
     <div class="col-md-3 left_col">
       <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;">
-          <a href="index.html" class="site_title"><i class="fa fa-dashboard"></i> <span>Bambi Hospital</span></a>
-        </div>
+          <a href="index.html" class="site_title">
+            <img class="dashImg" src="BMS logo only.png" alt="Dashboard Image">
+            <span>BIBO MEDSYS</span>
+        </a>
+              </div>
 
         <div class="clearfix"></div>
 
@@ -350,7 +353,7 @@
 <script type="module" src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
 <script type="module" src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
 
-<script type="module">
+<script type="module" src="progress.js">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js";
   import { getDatabase, ref,remove, push,get, onValue,child,set } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js";
 
@@ -694,15 +697,20 @@ function deleteRecord(recordKey, patientName, password) {
 // Define the addRecordForm and currentPatientName variables
 const addRecordForm = document.getElementById('addRecordForm');
 let currentPatientName = '';
-  function showMessage(message) {
+function showMessage(message) {
   const messageElement = document.getElementById('message');
   messageElement.textContent = message;
   messageElement.style.display = 'block';
 
+  // Hide the message after 4 seconds (4000 milliseconds)
   setTimeout(() => {
     messageElement.style.display = 'none';
-  }, 3000);
+  }, 4000);
 }
+
+// Call showMessage with an empty message to hide the message on page load
+showMessage('');
+
 
 // Attach the submit event listener outside the function
 addRecordForm.addEventListener('submit', function (e) {

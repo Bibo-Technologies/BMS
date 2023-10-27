@@ -2863,10 +2863,15 @@ function showMessage(message) {
   messageElement.textContent = message;
   messageElement.style.display = 'block';
 
+  // Hide the message after 4 seconds (4000 milliseconds)
   setTimeout(() => {
     messageElement.style.display = 'none';
-  }, 3000);
+  }, 4000);
 }
+
+// Call showMessage with an empty message to hide the message on page load
+showMessage('');
+
 
 addRecordForm.addEventListener('submit', function (e) {
   e.preventDefault();
@@ -3551,3 +3556,44 @@ window.addEventListener('offline', updateOnlineStatus);
 
 </body>
 </html>
+curl https://api.openai.com/v1/chat/completions 
+   "Content-Type: application/json" 
+   "Authorization: Bearer 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" 
+   '{
+     "model": "gpt-3.5-turbo",
+     "messages": [{"role": "user", "content": "Say this is a test!"}],
+     "temperature": 0.7
+   }'
+
+   curl https://api.openai.com/v1/chat/completions 
+  "Content-Type: application/json" 
+  "Authorization: Bearer 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"  
+  '{
+     "model": "gpt-3.5-turbo",
+     "messages": [{"role": "user", "content": "Say this is a test!"}],
+     "temperature": 0.7
+   }'
+
+   $apiKey = "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"
+$url = "https://api.openai.com/v1/chat/completions"
+
+$headers = @{
+    "Content-Type" = "application/json"
+    "Authorization" = "Bearer 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"
+}
+
+$body = @{
+    "model" = "gpt-3.5-turbo"
+    "messages" = @(
+        @{
+            "role" = "user"
+            "content" = "Say this is a test!"
+        }
+    )
+    "temperature" = 0.7
+} | ConvertTo-Json
+
+$response = Invoke-RestMethod -Uri $url -Headers $headers -Method Post -Body $body
+
+# Print the response
+$response

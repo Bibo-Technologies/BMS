@@ -20,11 +20,52 @@ const auth = getAuth(app); // Initialize Firebase Authentication
 
 
 
-// Function to display the login overlay on page load
+     
+// Ensure that authToken is defined in the global scope
+let authToken;
+let tokenExpiryTime;
+
+// Function to generate a token valid for 24 hours
+function generateToken() {
+authToken = Math.random().toString(36).substring(2);
+const currentTime = new Date();
+const tokenExpiryTime = new Date(currentTime.getTime() + 24 * 60 * 60 * 1000); // Token valid for 24 hours
+
+// Store token and expiry time in local storage
+localStorage.setItem('authToken', authToken);
+localStorage.setItem('tokenExpiryTime', tokenExpiryTime.toString());
+}
+
+
+// Function to retrieve token and its expiry time from local storage
+function retrieveTokenFromLocalStorage() {
+authToken = localStorage.getItem('authToken');
+const storedExpiryTime = localStorage.getItem('tokenExpiryTime');
+if (authToken && storedExpiryTime) {
+  tokenExpiryTime = new Date(storedExpiryTime);
+}
+}
+
+// Function to check if the token is still valid
+function isTokenValid() {
+const currentTime = new Date();
+return tokenExpiryTime > currentTime;
+}
+
+// Function to display the login overlay on page load based on token validity
 window.addEventListener('load', function() {
+retrieveTokenFromLocalStorage(); // Retrieve token from local storage
+// Check if token is valid, if not, display login overlay
+if (!isTokenValid()) {
   document.getElementById('loginoverlay').style.display = 'block';
   document.getElementById('loginpopup').style.display = 'block';
+  generateToken(); // Generate a new token on login overlay display
+  console.log(authToken + tokenExpiryTime)
+}
 });
+
+// Rest of your code...
+
 
 // Disable right-click when the popup is displayed
 document.addEventListener('contextmenu', function(event) {
@@ -38,7 +79,6 @@ if (event.keyCode === 123) {
 });
 
 });
-
 const allowedEmails = ['biboofficial256@gmail.com']; // Add the allowed email addresses here
 
 // Show a loader inside the submit button when it's clicked
@@ -47,24 +87,25 @@ event.preventDefault(); // Prevent default form submission
 
 // Show loader inside the submit button
 const submitBtn = document.getElementById('submitBtn');
-submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submit';
+submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting';
 
 // Get user credentials from the form
 const email = document.getElementById('email').value;
 const password = document.getElementById('password').value;
 
-// Use Firebase signInWithEmailAndPassword method with auth object
+// Update the login success block to generate a new token and store it
 signInWithEmailAndPassword(auth, email, password)
-  .then((userCredential) => {
-    // Check if the user's email is allowed
-    if (allowedEmails.includes(email)) {
-      // Login successful, hide the login overlay and popup
-      document.getElementById('loginoverlay').style.display = 'none';
-      document.getElementById('loginpopup').style.display = 'none';
+.then((userCredential) => {
+  // Check if the user's email is allowed
+  if (allowedEmails.includes(email)) {
+    // Login successful, hide the login overlay and popup
+    document.getElementById('loginoverlay').style.display = 'none';
+    document.getElementById('loginpopup').style.display = 'none';
+    generateToken(); // Generate a new token on successful login
     } else {
       // Login not allowed, show an error message
       const errorContainer = document.getElementById('errorContainer');
-      errorContainer.textContent = 'Access denied. You are not authorized to log in.';
+      errorContainer.textContent = 'Access denied. You are not authorized.';
       errorContainer.style.display = 'block'; // Show the message
       // Log out the user since they are not authorized
       signOut(auth)
@@ -114,8 +155,6 @@ sendPasswordResetEmail(auth, email)
     alert('Password reset email failed to send. ' + errorMessage);
   });
 });
-
-
 // Function to display a message with optional retry button and success flag
 function displayMessage(title, message, isSuccess = false) {
 // Clear existing messages
@@ -138,9 +177,8 @@ const closeButton = document.createElement('button');
 closeButton.classList.add('close-btn');
 closeButton.innerHTML = '<i class="fa fa-times"></i>';
 closeButton.addEventListener('click', function () {
-messageDiv.remove();
+  messageDiv.remove();
 });
-
 
 // Create title element
 const titleElement = document.createElement('h2');
@@ -151,99 +189,82 @@ const messageElement = document.createElement('p');
 messageElement.textContent = message;
 
 // Append title, message, and close button to the message div
-
 messageDiv.appendChild(titleElement);
 messageDiv.appendChild(messageElement);
-messageDiv.appendChild(closeButton);
+//messageDiv.appendChild(closeButton);
+
 // Append the message div to the document body
 document.body.appendChild(messageDiv);
 
+// Automatically remove the message after 5 seconds (5000 milliseconds)
+setTimeout(function () {
+  messageDiv.remove();
+}, 1500);
+}
+// Function to display user information
+function displayUserInformation(user) {
+// Set the h2 element text to the user's display name
+const profileName = document.querySelector('.profile_info h2');
+profileName.textContent = user.displayName;
 
+// Set the profile image source to the user's profile photo URL
+const profileImage = document.querySelector('.profile_pic img');
+profileImage.src = user.photoURL;
+
+// Set the profile image in the dropdown menu
+const dropdownProfileImage = document.querySelector('.user-profile img');
+dropdownProfileImage.src = user.photoURL;
+
+// Display success message
+displayMessage('', `Welcome, ${user.displayName}.`, true); // Pass true for success message
+
+// Reload the page content or perform any necessary actions for an authenticated user
 }
 
-// Rest of your code...
+// Function to handle sign-in success
+function handleSignInSuccess(user) {
+// Display user information
+displayUserInformation(user);
+}
+
+// Function to handle sign-in error
+function handleSignInError(error) {
+console.error('Error signing in:', error);
+// Display access denied message
+displayMessage('Access Denied. Please sign in with a valid email.');
+}
+
+// Function to sign in with Google
+function signInWithGoogle() {
+var provider = new GoogleAuthProvider();
+signInWithPopup(auth, provider)
+  .then(function (result) {
+    const user = result.user;
+    handleSignInSuccess(user);
+  })
+  .catch(function (error) {
+    handleSignInError(error);
+  });
+}
+
 // Display the email sign-in popup on page load
 window.addEventListener('load', function() {
-// Check if the user is already signed in
 auth.onAuthStateChanged(function(user) {
   if (user) {
     // User is signed in
-   // console.log('User signed in:', user.email);
-    // Set the h2 element text to the user's display name
-    const profileName = document.querySelector('.profile_info h2');
-    profileName.textContent = user.displayName;
-    // Set the profile image source to the user's profile photo URL
-    const profileImage = document.querySelector('.profile_pic img');
-    profileImage.src = user.photoURL;
-    // Set the profile image in the dropdown menu
-    const dropdownProfileImage = document.querySelector('.user-profile img');
-    dropdownProfileImage.src = user.photoURL;
-    // Display success message
-    displayMessage('Success', `Welcome, ${user.displayName}! You are authenticated.`, true); // Pass true for success message
-    // Reload the page content
-
-    // Perform any necessary actions for an authenticated user
+    displayUserInformation(user);
   } else {
     // User is not signed in, display the sign-in popup
-    var provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .then(function(result) {
-        // Handle sign-in success
-        var user = result.user;
-      //  console.log('User signed in:', user.email);
-        // Set the h2 element text to the user's display name
-        const profileName = document.querySelector('.profile_info h2');
-        profileName.textContent = user.displayName;
-        // Set the profile image source to the user's profile photo URL
-        const profileImage = document.querySelector('.profile_pic img');
-        profileImage.src = user.photoURL;
-        // Set the profile image in the dropdown menu
-        const dropdownProfileImage = document.querySelector('.user-profile img');
-        dropdownProfileImage.src = user.photoURL;
-        // Display success message
-        displayMessage('Success', `Welcome, ${user.displayName}! You are authenticated.`, true); // Pass true for success message
-        // Reload the page content
-    
-        // Perform any necessary actions for an authenticated user
-      })
-      .catch(function(error) {
-        // Handle sign-in error
-        console.error('Error signing in:', error);
-        // Display access denied message
-        displayMessage('Access Denied', 'You are not authenticated. Please sign in with a valid email.');
-      });
+    signInWithGoogle();
   }
 });
 });
 
 // Function to retry the sign-in process
 function retryCallback() {
-var provider = new GoogleAuthProvider();
-signInWithPopup(auth, provider)
-  .then(function(result) {
-    // Handle sign-in success
-    var user = result.user;
-   /// console.log('User signed in:', user.email);
-    // Set the h2 element text to the user's display name
-    const profileName = document.querySelector('.profile_info h2');
-    profileName.textContent = user.displayName;
-    // Set the profile image source to the user's profile photo URL
-    const profileImage = document.querySelector('.profile_pic img');
-    profileImage.src = user.photoURL;
-    // Set the profile image in the dropdown menu
-    const dropdownProfileImage = document.querySelector('.user-profile img');
-    dropdownProfileImage.src = user.photoURL;
-    // Display success message
-    displayMessage('Success', `Welcome, ${user.displayName}! You are authenticated.`, true); // Pass true for success message
-    // Reload the page content
-
-    // Perform any necessary actions for an authenticated user
-  })
-  .catch(function(error) {
-    // Handle sign-in error
-    console.error('Error signing in:', error);
-  });
+signInWithGoogle();
 }
+
 
 
 
@@ -690,10 +711,15 @@ const messageElement = document.getElementById('message');
 messageElement.textContent = message;
 messageElement.style.display = 'block';
 
+// Hide the message after 4 seconds (4000 milliseconds)
 setTimeout(() => {
   messageElement.style.display = 'none';
-}, 3000);
+}, 4000);
 }
+
+// Call showMessage with an empty message to hide the message on page load
+showMessage('');
+
 
 // Attach the submit event listener outside the function
 addRecordForm.addEventListener('submit', function (e) {
