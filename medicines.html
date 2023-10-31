@@ -292,10 +292,10 @@ fullscreenButton.addEventListener('click', function() {
 </div>
 </div>
     <section>
-        <button id="uploadBtn"><i class="fa fa-plus"></i>Add new Medicine</button>
+        <button id="uploadBtn"><i class="fa fa-plus"></i>Add Medicine</button>
         <div style="margin: auto;" class="search-container">
           <input type="text" id="searchInput" placeholder="Search medicine...">
-          <button id="searchButton">Search</button> 
+          <button id="searchButton"><i class="fas fa-search"></i> </button> 
         </div> 
         <div class="cart-container">
           <button id="openCartButton">
@@ -359,7 +359,7 @@ fullscreenButton.addEventListener('click', function() {
 
 <div id="customAlert" class="custom-alert">
   <div class="custom-alert-content">
-    <h2><i class="fa fa-exclamation-triangle"></i>Medicine Alert Report</h2>
+    <h2><i class="fa fa-exclamation-triangle"></i>Medicine Alert</h2>
     <div id="categoryContainer" class="category-container"></div>
     <button id="customAlertButton" class="custom-alert-button">OK</button>
   </div>
@@ -389,7 +389,7 @@ fullscreenButton.addEventListener('click', function() {
             <h2>Sell Product</h2>
             <form class="popup-form2" id="sellProductForm2">
               <p id="sellPopupMessage"></p>
-              <label for="sellGrams">Number of Grams to Sell:</label>
+              <label for="sellGrams">Number of Milligrams to Sell:</label>
               <input type="number" id="sellGrams" required>
         
               <input type="hidden" id="sellFormPatientName" name="patientName">
@@ -403,7 +403,7 @@ fullscreenButton.addEventListener('click', function() {
               <!-- Add to Cart button with icon -->
               <button type="button" class="add-to-cart-button" id="addToCartButton"><i class="fas fa-cart-plus"></i> Add to Cart </button>
         
-              <button type="submit" id="submitSellForm">
+              <button style="display: none;" type="submit" id="submitSellForm">
                 <i class="fas fa-receipt"></i> Sell
               </button>
                           </form>
@@ -422,13 +422,13 @@ fullscreenButton.addEventListener('click', function() {
               <input type="text" id="name" required>
               <label for="dob">Date of Expiry:</label>
               <input type="date" id="dob" required>
-              <label for="gramsPerPiece">Grams per Piece:</label>
+              <label for="gramsPerPiece">Milligrams per Piece:</label>
               <input type="number" id="gramsPerPiece" required>
               <label for="parents">Number of Pieces:</label>
               <input type="number" id="parents" required>
               <label for="price">Price Per Piece (Ugx):</label>
               <input type="number" id="price" required>
-              <label for="pricepergram">Price Per Gram (Ugx):</label>
+              <label for="pricepergram">Price Per Milligram (Ugx):</label>
               <input type="number" data-cost-per-gram="" id="pricepergram" required>
               <label for="dob">Date of Stock:</label>
               <input type="date" id="dos" required>

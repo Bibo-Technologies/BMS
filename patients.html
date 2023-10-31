@@ -362,10 +362,10 @@ fullscreenButton.addEventListener('click', function() {
 </script>
 
       <section>
-        <button id="uploadBtn"><i class="fa fa-plus"></i>Register New Patient</button>
+        <button id="uploadBtn"><i class="fa fa-plus"></i>Register Patient</button>
         <div style="margin: auto;" class="search-container">
           <input type="text" id="searchInput" placeholder="Search by name or ID ...">
-          <button id="searchButton">Search</button> 
+          <button id="searchButton"><i class="fas fa-search"></i> </button> 
         </div>
         
         
@@ -567,6 +567,7 @@ bloodPressureInput.addEventListener('input', (event) => {
     <p id="patientIdDisplay"></p>
     <input type="text" id="editedName" placeholder="Name">
     <input type="date" id="editedDOB" placeholder="Date of Birth">
+    <input type="number" id="editedTel" placeholder="Telephone Contact">
     <button id="saveEditedDetails" class="button save-button">Save Changes</button>
   </div>
 </div>
@@ -616,7 +617,8 @@ bloodPressureInput.addEventListener('input', (event) => {
               <input type="date" id="dob" required>
               
               <label for="parents">Telephone Contact:</label>
-              <input type="number" id="parents" required>
+              <span class="note">NB: Include the country code</span>
+              <input type="tel" id="parents" required>
               
               <label for="residence">Place of Residence:</label>
               <input type="text" id="residence" required>

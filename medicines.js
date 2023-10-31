@@ -456,7 +456,7 @@ const table = document.createElement('table');
 table.classList.add('patient-table');
 
 // Create table headers
-const headers = ['Name', 'Rmg Stock', 'Expiry', 'Stock lvl', 'D.O.S', 'Grams @pc', 'Price @Piece', 'Price @Gram', 'Initial Stock', 'Est. Revenue', 'Actions'];
+const headers = ['Name', 'Rmg Stock', 'Expiry', 'Stock lvl', 'D.O.S', 'Mgs @pc', 'Price @Piece', 'Price @Mgs', 'Initial Stock', 'Est. Revenue', 'Actions'];
 const headerRow = document.createElement('tr')
 headers.forEach((headerText) => {
   const th = document.createElement('th');
@@ -545,6 +545,24 @@ if (remainingStock < 20) {
   stockLevelCell.textContent = 'In Stock';
 }
 row.appendChild(stockLevelCell);
+
+
+// Check if there are no messages in each category
+alertCategories.forEach(category => {
+  if (category.messages.length === 0) {
+    category.messages.push('No medicines found!');
+  }
+});
+
+// Check if there are no alert messages at all
+const allAlertMessages = alertCategories.reduce((acc, category) => acc.concat(category.messages), []);
+if (allAlertMessages.length === 0) {
+  allAlertMessages.push('No medicines found!');
+}
+
+// Now you can display the alert messages in your HTML, e.g., in a div with an id 'alertMessages'
+const alertMessagesDiv = document.getElementById('categoryContainer');
+alertMessagesDiv.innerHTML = allAlertMessages.join('<br>');
 }
 
 
@@ -1223,8 +1241,8 @@ const patientSalesRef = push(ref(database, `medicine/${sellFormPatientName}/sale
 // Generate a unique sale ID using the `key` method
 const saleId = patientSalesRef.key;
 
-// Get the current timestamp
-const currentTime = new Date().getTime();
+// Get the current timestamp in PC format (en-US locale)
+const currentTime = new Date().toLocaleString("en-US");
 
 // Format the timestamp into date and time
 const saleDate = new Date(currentTime).toLocaleDateString();

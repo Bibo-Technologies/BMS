@@ -984,7 +984,7 @@ saveEditedDetailsHandler = saveEditedDetails;
   // Fill input fields with current patient details
   document.getElementById('editedName').value = patient.name;
   document.getElementById('editedDOB').value = patient.dob;
-
+  document.getElementById('editedTel').value = patient.parents;
   // Display the patient ID in the popup
   document.getElementById('patientIdDisplay').innerText = `Patient ID: ${patientId}`;
 
@@ -1013,12 +1013,14 @@ function closeEditPopup() {
 function saveEditedDetails() {
   const editedName = document.getElementById('editedName').value;
   const editedDOB = document.getElementById('editedDOB').value;
+  const editedTel = document.getElementById('editedTel').value;
 
   // Ensure the current patient's ID is available
   if (currentPatientId) {
     const editedPatient = {
       name: editedName,
       dob: editedDOB,
+      parents: editedTel,
     };
 
     // Save updated details to Firebase under the specific patient
@@ -2326,6 +2328,7 @@ recordElement.appendChild(shareButton);
 const whatsappShareButton = document.createElement('button');
 whatsappShareButton.id = 'whatsappShareButton';
 whatsappShareButton.innerHTML = '<i class="fa fa-whatsapp"></i> Results';
+// Add a click event listener to the WhatsApp share button
 
 // Add a click event listener to the WhatsApp share button
 whatsappShareButton.addEventListener('click', () => {
@@ -2339,14 +2342,14 @@ whatsappShareButton.addEventListener('click', () => {
       const testData = snapshot.val();
       if (testData && testData.resultFileURL) {
         // Get the patient's WhatsApp number from the patient object
-        const patientPhoneNumber = patient.parents; // Replace with the correct property name
+        const patientPhoneNumber = patient.parents;
 
         // Create the WhatsApp message with the file URL
         const fileURL = testData.resultFileURL;
         const message = generateWhatsAppMessage(fileURL);
 
-        // Construct the WhatsApp URL with the patient's number and message
-        const whatsappURL = `https://wa.me/${patientPhoneNumber}?text=${encodeURIComponent(message)}`;
+        // Construct the WhatsApp URL with the patient's number and message using the official WhatsApp API
+        const whatsappURL = `https://api.whatsapp.com/send?phone=${patientPhoneNumber}&text=${encodeURIComponent(message)}`;
 
         // Open WhatsApp in a new tab or window
         window.open(whatsappURL, '_blank');
@@ -2360,7 +2363,6 @@ whatsappShareButton.addEventListener('click', () => {
     });
 });
 
-
 // Function to generate the WhatsApp message
 function generateWhatsAppMessage(fileURL) {
   // Customize the message content here based on the patient's information and the file URL
@@ -2371,6 +2373,7 @@ function generateWhatsAppMessage(fileURL) {
 
   return message;
 }
+
 
 
 function shareRecord(patient, record) {

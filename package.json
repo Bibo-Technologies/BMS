@@ -10,7 +10,10 @@
     "lib": "lib"
   },
   "scripts": {
-    "minify-html": "html-minifier --bibo-medical-systems src --output-html --file-ext html"
+    "build:medicines": "uglifyjs medicines.js -o medicines.min.js",
+    "build:index": "uglifyjs index.js -o index.min.js",
+    "build:patients": "uglifyjs patients.js -o patients.min.js",
+    "build:all": "npm-run-all build:medicines build:index build:patients"
   },
   "keywords": [],
   "author": "",
