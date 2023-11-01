@@ -1655,7 +1655,7 @@ medicationTable.classList.add('medication-table');
 
 // Create table header row
 const tableHeaderRow = document.createElement('tr');
-const headers = ['Medication', 'Prescription', 'Grams', 'Total Cost'];
+const headers = ['Medication', 'Prescription', 'Milligrams', 'Total Cost'];
 headers.forEach((headerText) => {
   const tableHeaderCell = document.createElement('th');
   tableHeaderCell.textContent = headerText;
@@ -2142,7 +2142,7 @@ function printRecord(patient, record, visitKeys, visitDetails, latestVisitData) 
 
   doc.autoTable({
     startY: 195,
-    head: [['Medication', 'Prescription', 'Grams', 'Total Cost']],
+    head: [['Medication', 'Prescription', 'Milligrams', 'Total Cost']],
     body: medicationTableData,
     theme: 'grid',
     styles: {
@@ -2810,7 +2810,7 @@ onValue(prescriptionsRef, (snapshot) => {
 
  // Grams label
   const gramsLabel = document.createElement('label');
-  gramsLabel.textContent = 'Grams:';
+  gramsLabel.textContent = 'Milligrams:';
   gramsLabel.setAttribute('for', 'gramsInput');
 
 
@@ -2818,11 +2818,11 @@ onValue(prescriptionsRef, (snapshot) => {
   const gramsInput = document.createElement('input');
   gramsInput.type = 'number';
   gramsInput.step = 'any'; // Allow decimal values for grams
-  gramsInput.placeholder = 'Grams';
+  gramsInput.placeholder = 'Milligrams';
 
    // Cost per gram output label
    const costPerGramLabel = document.createElement('label');
-  costPerGramLabel.textContent = 'Cost of Grams:';
+  costPerGramLabel.textContent = 'Cost of Milligrams:';
   costPerGramLabel.setAttribute('for', 'costPerGramOutput');
 
   

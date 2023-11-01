@@ -673,6 +673,7 @@ if (daysRemaining < 0) {
         // Disable the "Add to Cart" button
         addToCartButton.disabled = true;
         addToCartButton.style.cursor = "disabled";
+        addToCartButton.style.backgroundColor = "lightblue";
         // Show a message in the popup
         const sellPopupMessage = document.getElementById('sellPopupMessage');
         sellPopupMessage.textContent = 'Pieces are more than remaining stock';
@@ -871,7 +872,7 @@ const receiptTable = `
     <thead>
       <tr>
         <th>Medicine</th>
-        <th>Grams</th>
+        <th>Milligrams</th>
         <th>Pieces</th>
         <th>Cost</th>
       </tr>
@@ -943,7 +944,7 @@ cartTable.classList.add('cart-table');
 // Create a table header
 const tableHeader = document.createElement('thead');
 const headerRow = document.createElement('tr');
-const headers = ['Medicine', 'Grams', 'Pieces', 'Total Cost', 'Action'];
+const headers = ['Medicine', 'Milligrams', 'Pieces', 'Total Cost', 'Action'];
 headers.forEach((headerText) => {
   const headerCell = document.createElement('th');
   headerCell.textContent = headerText;

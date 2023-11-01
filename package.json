@@ -13,7 +13,15 @@
     "build:medicines": "uglifyjs medicines.js -o medicines.min.js",
     "build:index": "uglifyjs index.js -o index.min.js",
     "build:patients": "uglifyjs patients.js -o patients.min.js",
-    "build:all": "npm-run-all build:medicines build:index build:patients"
+    "build:clinical": "uglifyjs clinical.js -o clinical.min.js",
+    "build:doctors": "uglifyjs doctors.js -o doctors.min.js",
+    "build:insurance": "uglifyjs insurance.js -o insurance.min.js",
+    "build:laboratory": "uglifyjs laboratory.js -o laboratory.min.js",
+    "build:odp": "uglifyjs odp.js -o odp.min.js",
+    "build:sales": "uglifyjs sales.js -o sales.min.js",
+    "build:staff": "uglifyjs staff.js -o staff.min.js",
+    "build:tests": "uglifyjs tests.js -o tests.min.js",
+    "build:all": "npm-run-all build:medicines build:index build:patients build:clinical build:doctors build:insurance build:laboratory build:odp build:sales build:staff build:tests"
   },
   "keywords": [],
   "author": "",

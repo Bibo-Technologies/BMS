@@ -2189,7 +2189,7 @@ const medicationTableData = [];
 
 // Create table header row
 const tableHeaderRow = document.createElement('tr');
-const headers = ['Medication', 'Prescription', 'Grams', 'Total Cost'];
+const headers = ['Medication', 'Prescription', 'Milligrams', 'Total Cost'];
 headers.forEach((headerText) => {
   const tableHeaderCell = document.createElement('th');
   tableHeaderCell.textContent = headerText;
@@ -2367,9 +2367,11 @@ whatsappShareButton.addEventListener('click', () => {
 function generateWhatsAppMessage(fileURL) {
   // Customize the message content here based on the patient's information and the file URL
   const patientName = patient.name; // Replace with the actual patient's name
+  const hospitalName = 'Sanyu Hospital'; // Replace with the hospital's name
+  const contactNumber = '+256 708 657 717'; // Replace with the hospital's contact number
 
   // Create the message text with the file URL
-  const message = `Hello ${patientName},\nHere are your latest medical results: ${fileURL}`;
+  const message = `Hello ${patientName},\n\nThis is ${hospitalName}. We are pleased to share your latest medical results with you. Please click on the link below to access your results:\n\n${fileURL}\n\nFor any questions or assistance, feel free to contact us at ${contactNumber}.\n\nThank you for choosing ${hospitalName} for your healthcare needs. We value your trust and are here to assist you with any medical concerns.\n\nBest regards,\n${hospitalName}`;
 
   return message;
 }
@@ -2587,22 +2589,23 @@ function generateMedicalFormWhatsAppMessage(patient, latestVisitData, medication
   // Customize the message content here based on the patient's information, latest visit data, medication details, and the new details
 
   const patientName = patient.name; // Replace with the actual patient's name
-  const latestVisitDetails = generateLatestVisitDetailsFromDisplay();
+  const latestVisitDetails = generateLatestVisitDetailsFromDisplay(latestVisitData);
   const medicationDetails = generateMedicationDetails(medicationTableData);
 
-  const testsTaken = `${testsTakenElement.textContent}`;
-  const paymentStatus = `${paymentStatusElement.textContent}`;
-  const resultsObtained = `${resultsObtainedElement.textContent}`;
-  const followUp = `Follow Up date & time: ${followUpData.textContent}`;
+  const testsTaken = `Tests Taken: ${testsTakenElement.textContent}`;
+  const paymentStatus = `Test Payment: ${paymentStatusElement.textContent}`;
+  const resultsObtained = `Test Results Status: ${resultsObtainedElement.textContent}`;
+  const followUp = `Follow Up Date & Time: ${followUpData.textContent}`;
   const consumablesPrice = `Consumables Price (UGX): ${consumablesRow.lastChild.textContent}`;
   const sundriesPrice = `Sundries Price (UGX): ${sundriesRow.lastChild.textContent}`;
   const treatmentTotal = `Treatment Total (UGX): ${treatmentTotalRow.lastChild.textContent}`;
 
   // Create the message text
-  const message = `Hello ${patientName},\nMedical Form Details:\n\n${latestVisitDetails}\n\nMedication Details:\n${medicationDetails}\n\nAdditional Details:\n${testsTaken}\n${paymentStatus}\n${resultsObtained}\n${followUp}\n${consumablesPrice}\n${sundriesPrice}\n${treatmentTotal}`;
+  const message = `Hello ${patientName},\n\nMedical Form Details:\n${latestVisitDetails}\n\nMedication Details:\n${medicationDetails}\n\nAdditional Details:\n${testsTaken}\n${paymentStatus}\n${resultsObtained}\n${followUp}\n${consumablesPrice}\n${sundriesPrice}\n${treatmentTotal}\n\nThank you for choosing our healthcare services. If you have any questions or need further assistance, please feel free to contact us.`;
 
   return message;
 }
+
 
 
 
@@ -2631,7 +2634,7 @@ function generateMedicationDetails(medicationTableData) {
       const medicationName = medication.medication;
       const prescription = medication.prescription;
       const grams = medication.grams;
-      return `${medicationName}: Prescription - ${prescription}, Grams - ${grams}`;
+      return `${medicationName}: Prescription - ${prescription}, Milligrams - ${grams}`;
     });
 
     return details.join('\n');
@@ -2838,7 +2841,7 @@ for (let i = 1; i < medicationRows.length; i++) {
 
 doc.autoTable({
   startY: 200,
-  head: [['Medication', 'Prescription', 'Grams']],
+  head: [['Medication', 'Prescription', 'Milligrams']],
   body: medicationTableData,
   theme: 'grid',
   styles: {
@@ -3649,7 +3652,7 @@ onValue(prescriptionsRef, (snapshot) => {
 
  // Grams label
   const gramsLabel = document.createElement('label');
-  gramsLabel.textContent = 'Grams:';
+  gramsLabel.textContent = 'Milligrams:';
   gramsLabel.setAttribute('for', 'gramsInput');
 
 
@@ -3657,11 +3660,11 @@ onValue(prescriptionsRef, (snapshot) => {
   const gramsInput = document.createElement('input');
   gramsInput.type = 'number';
   gramsInput.step = 'any'; // Allow decimal values for grams
-  gramsInput.placeholder = 'Grams';
+  gramsInput.placeholder = 'Milligrams';
 
    // Cost per gram output label
    const costPerGramLabel = document.createElement('label');
-  costPerGramLabel.textContent = 'Cost of Grams:';
+  costPerGramLabel.textContent = 'Cost of Milligrams:';
   costPerGramLabel.setAttribute('for', 'costPerGramOutput');
 
   
