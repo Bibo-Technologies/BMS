@@ -7,8 +7,7 @@
   <link href="BMS logo only.png" rel="icon">
   <!-- Include spin.js from a CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
-
-   <!-- Include the jQuery library -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>   <!-- Include the jQuery library -->
    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
    <!-- Include the Select2 CSS and JS files -->
@@ -21,7 +20,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.25.0/date_fns.min.js"></script>
   <link rel="manifest" href="manifest.json">
-
+  <script src="https://apis.google.com/js/client.js"></script>
 </head>
 
 <!-- partial:index.partial.html -->
@@ -325,7 +324,9 @@ fullscreenButton.addEventListener('click', function() {
   </div>
    <div id="greeting"></div>
   </section>
-  
+
+
+
 <h2>Hospital Survey</h2>
   <section class="intro">
     <div class="survey-item">
@@ -337,6 +338,16 @@ fullscreenButton.addEventListener('click', function() {
       <i style="color: brown;" class="fa fa-users"></i>
       <span class="count2" id="patientsCount">0</span>
       <h3>Patients</h3>
+    </div>
+    <div class="survey-item">
+      <i style="color: #ff5733;" class="fas fa-hospital"></i> <!-- Example color: orange -->
+      <span class="count2" id="admittedPatientsCount">0</span>
+      <h3>Admitted</h3>
+    </div>
+    <div class="survey-item">
+      <i style="color: blue;" class="fas fa-stethoscope"></i>
+      <span class="count2" id="opdClientsCount">0</span>
+      <h3>OPD</h3>
     </div>
     
     <div class="survey-item">
@@ -480,7 +491,7 @@ document.getElementById('closeDetailsButton').addEventListener('click', () => {
 </div>
 
     <section>
-      <h1 style="color: white;">Hospital Expenses</h1>
+      <h1 style="color: white; text-decoration: none;">Hospital Expenses</h1>
 
     <div id="dailyExpenseContainer">
     <h2 style="margin-top: 20px; color: white">Daily Expenses</h2>
@@ -634,7 +645,8 @@ document.getElementById('closeDetailsButton').addEventListener('click', () => {
   <div id="pagination"></div>
           
 
-  
+    <iframe src="https://calendar.google.com/calendar/embed?src=440342498130-rn5fai1rdbk96jm3n1kcte01on45b5aq.apps.googleusercontent.com%40group.calendar.google.com&ctz=Africa%2FNairobi" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+
   <style>
 /* The overlay */
 #schemeOverlay {
@@ -713,9 +725,9 @@ button:hover {
 }
 
 .text {
-  background: #73C8A9;  /* fallback for old browsers */
-background: -webkit-linear-gradient(to right, #373B44, #73C8A9);  /* Chrome 10-25, Safari 5.1-6 */
-background: linear-gradient(to right, #373B44, #73C8A9); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: #4CA1AF;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #4CA1AF, #C4E0E5);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #4CA1AF, #C4E0E5); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 
   padding: 20px;
   border-radius: 8px;

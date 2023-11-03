@@ -5792,7 +5792,7 @@ h2 {
 #onlineStatus {
  
   background-color: #52C41A;
-  border-radius: 10px;
+  border-radius: 50px;
   padding: 10px;
   color:white;
   background-color: #FF4D4F;
@@ -6424,7 +6424,7 @@ margin-top: 30px;
     background-color: #FFFFFF;
     display: flex;
     width: 100%;
-    height: 200px;
+    padding: 20px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -6432,8 +6432,11 @@ margin-top: 30px;
   }
 
   .survey-item i {
-    font-size: 48px;
+    font-size: 40px;
     margin-bottom: 10px;
+  }
+  .survey-item p {
+    font-size: medium;
   }
  
   .survey-item span {
@@ -9137,17 +9140,14 @@ body.popup-open {
 .icon.no-data {
   color: gray; /* Change the color for no data registered */
 }
-.iframe-container {
-  display: flex;
-  justify-content: space-between;
-  margin: 20px 0;
-}
 
-.iframe-container iframe {
+iframe {
   width: 100%; /* Adjust the width as needed */
   height: 500px; /* Adjust the height as needed */
   border: 1px solid #ccc;
   border-radius: 10px;
+  margin: 10px 0;
+  box-shadow: #000 10px;
 }
 
 /* Style for editedName input */
@@ -9502,4 +9502,38 @@ float: right;
 
 #sellPopupMessage{
   color: red;
+}
+
+.search-container {
+  text-align: center;
+  background-color: #4CA1AF;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 20px;
+}
+
+.search-container h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #FFF; /* White text color */
+}
+
+#medicineInput {
+  padding: 10px;
+  width: 60%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#searchMedicineButton {
+  background-color: #3498db;
+  color: #FFF;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#searchMedicineButton:hover {
+  background-color: #2980b9; /* Darker shade on hover */
 }

@@ -1967,9 +1967,6 @@ previousDaySalesCount = totalSalesCount;
 
 
 
-let previousDaySalesCount = 0; // Declare the variable outside the function
-
-
 // Function to fetch all sales data with retry mechanism
 function fetchAllSalesDataWithRetry(maxRetries, retryDelay) {
 let retries = 0;
@@ -2063,6 +2060,49 @@ fetchSalesData().catch(() => {
 // Call the function with maximum retries of 3 and a retry delay of 1000 milliseconds (1 second)
 fetchAllSalesDataWithRetry(3, 1000);
 
+// Reference to the 'treatment-patients' node
+const treatmentPatientsRef = ref(database, 'treatment-patients');
+
+// Initialize counts for Admitted and OPD clients
+let admittedPatientsCount = 0;
+let opdClientsCount = 0;
+
+// Listen for changes in the 'treatment-patients' node
+onValue(treatmentPatientsRef, (snapshot) => {
+  snapshot.forEach((childSnapshot) => {
+    // Check the patientStatus of each patient
+    const patientStatus = childSnapshot.child('patientStatus').val();
+
+    if (patientStatus === 'Admitted') {
+      // Count Admitted patients
+      admittedPatientsCount++;
+    } else if (patientStatus === 'OPD Client') {
+      // Count OPD clients
+      opdClientsCount++;
+    }
+  });
+
+  // Update the counts in your HTML
+  const admittedPatientsCountElement = document.getElementById('admittedPatientsCount');
+  const opdClientsCountElement = document.getElementById('opdClientsCount');
+
+  // Add console.log statements for debugging
+  console.log('Admitted Patients Count:', admittedPatientsCount);
+  console.log('OPD Clients Count:', opdClientsCount);
+
+  // Update the HTML elements
+  if (admittedPatientsCountElement) {
+    admittedPatientsCountElement.textContent = admittedPatientsCount;
+  } else {
+    console.error("Element with ID 'admittedPatientsCount' not found.");
+  }
+
+  if (opdClientsCountElement) {
+    opdClientsCountElement.textContent = opdClientsCount;
+  } else {
+    console.error("Element with ID 'opdClientsCount' not found.");
+  }
+});
 
 // Function to search sales by medicine
 function searchByMedicine() {
