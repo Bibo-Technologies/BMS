@@ -821,7 +821,7 @@ const hospitalInfo = `
   margin: 0;
 }
 .receipt-header p {
-  font-size: 15px;
+  font-size: 14px;
   text-align: left;
   margin: 5;
 }
@@ -872,7 +872,7 @@ const receiptTable = `
     <thead>
       <tr>
         <th>Medicine</th>
-        <th>Milligrams</th>
+        <th>Mgs</th>
         <th>Pieces</th>
         <th>Cost</th>
       </tr>
@@ -1104,12 +1104,15 @@ if (!isNaN(grams) && !isNaN(pieces) && !isNaN(totalCost) && pieces > 0) {
   itemCount.textContent = cartCount;
   addToCartButton.innerHTML = '<i class="fas fa-check-circle"></i> Added';
   addToCartButton.style.backgroundColor = 'orange';
+  addToCartButton.disabled = true;
+  
   
   // Revert the effect after 2 seconds
   setTimeout(() => {
     addToCartButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
     addToCartButton.style.backgroundColor = ''; // Revert to the original background color
-  
+    addToCartButton.disabled = false;
+
    // Click the sellPopupClose button
    const sellPopupClose = document.getElementById('sellPopupClose2');
    sellPopupClose.click();
@@ -1167,7 +1170,7 @@ function hideAlert() {
 
 async function sellMedicinesInCart(cart) {
 const sellButton = document.querySelector('.add-to-cart-button');
-sellButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Selling...';
+sellButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
 if (cart.length === 0) {
   // All items in the cart have been sold

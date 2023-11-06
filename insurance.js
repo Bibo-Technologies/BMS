@@ -1016,7 +1016,7 @@ const paymentScheme = insuranceDetails.paymentScheme ? insuranceDetails.paymentS
 
 // Add the insurance details to the div element as a table
 insuranceDetailsElement.innerHTML = `
-  <h3>Current Insurance Details for ${currentPatientName}</h3>
+  <h3>Current Insurance Details for Patient with ID:${currentPatientName}</h3>
   <table>
     <tr>
       <td><i class="fas fa-building"></i></td>

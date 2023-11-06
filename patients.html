@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Bibo Medical Systems </title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/1.5.3/signature_pad.min.js"></script>
 
    <!-- Include the jQuery library -->
    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -648,9 +649,51 @@ bloodPressureInput.addEventListener('input', (event) => {
      
         </div>
       </div>
-      <script>
+      <div id="birthdayMessagePopup"  >
+        <div>
+            <div class="popup-header">
+                <h2>🎂🎁🎉 Birthday Messages</h2>
+                <p>Send warm birthday wishes to your patients on their special day. 🎉</p>
+            </div>
+            <div class="popup-body">
+                <p class="current-date">Today's Date: <span id="currentDate"></span></p>
+                <table id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientsList">
+                        <!-- Patients with birthdays today will be added here -->
+                    </tbody>
+                </table>
+                <textarea id="birthdayMessageInput" placeholder="Enter your heartfelt birthday message" rows="5"></textarea>
+            </div>
+            <div class="popup-footer">
+                <button id="sendBirthdayMessage" class="send-button">🎉 Send Wishes 🎉</button>
+                <button id="closeMessagePopup" class="close-button">Close</button>
+            </div>
+        </div>
+    </div>
+    <div id="overlay2"></div>
+<!-- Signature Popup -->
+<div id="signaturePopup" style="display: none;">
+  <div>
+    <h2>Doctor's Signature</h2>
+    <canvas id="signatureCanvas"></canvas>
+    <button id="clearSignature">Clear</button>
+    <button id="saveSignature"><i class="fas fa-save"></i> Save</button>
+  </div>
+  <button id="closeSignaturePopup" class="close-button"><i class="fas fa-times"></i></button>
+
+</div>
+
+    
+
+    
       
-      </script>
+      
 
     <!-- /page content -->
 

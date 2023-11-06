@@ -601,57 +601,209 @@ function renderPatients() {
     return cell;
   }
 
+  // Function to check if the given date is today
+  function isToday(date) {
+    const today = new Date();
+    return date.getDate() === today.getDate() && date.getMonth() === today.getMonth();
+  }
+
+  // Check if any patients have birthdays today
+  let isBirthdayToday = false;
+
   // Append the header row to the table
   table.appendChild(tableHeaderRow);
 
-patientsForPage.forEach(patient => {
-  // Create a table row for each patient
-  const tableRow = document.createElement('tr');
-  tableRow.classList.add('table-row');
+  patientsForPage.forEach(patient => {
+    // Create a table row for each patient
+    const tableRow = document.createElement('tr');
+    tableRow.classList.add('table-row');
 
-  // Create the table cells for patient information
-  const nameCell = createTableCell(patient.name);
-  const residenceCell = createTableCell(patient.residence);
-  const paymentCell = createTableCell(patient.payment);
-  const sexCell = createTableCell(patient.sex);
-  const patientIdCell = createTableCell('PI - ' + patient.patientId);
-  const parentsCell = createHiddenDigitsTableCell(patient.parents, 3);
-  const dobCell = createTableCell(patient.dob);
-  
-  // Calculate the age based on the date of birth
-  const dob = new Date(patient.dob);
-  const today = new Date();
-  const age = today.getFullYear() - dob.getFullYear();
-  const ageCell = createTableCell(age.toString());
+    // Create the table cells for patient information
+    const nameCell = createTableCell(patient.name);
+    const residenceCell = createTableCell(patient.residence);
+    const paymentCell = createTableCell(patient.payment);
+    const sexCell = createTableCell(patient.sex);
+    const patientIdCell = createTableCell('PI - ' + patient.patientId);
+    const parentsCell = createHiddenDigitsTableCell(patient.parents, 3);
+    const dobCell = createTableCell(patient.dob);
 
-  // Create the actions cell with the view button
-  const actionsCell = document.createElement('td');
-  const viewButton = document.createElement('button');
-  viewButton.textContent = 'View';
-  viewButton.classList.add('view-button');
-  viewButton.addEventListener('click', function() {
-    currentPatientName = patient.name; // Set the current patient name
-    openPatientHistoryPopup(patient);
+    // Calculate the age based on the date of birth
+    const dob = new Date(patient.dob);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const ageCell = createTableCell(age.toString());
+
+    // Create the actions cell with the view button
+    const actionsCell = document.createElement('td');
+    const viewButton = document.createElement('button');
+    viewButton.textContent = 'View';
+    viewButton.classList.add('view-button');
+    viewButton.addEventListener('click', function() {
+      currentPatientName = patient.name; // Set the current patient name
+      openPatientHistoryPopup(patient);
+    });
+    actionsCell.appendChild(viewButton);
+
+    // Check if it's the patient's birthday today
+    if (isToday(dob)) {
+      dobCell.style.backgroundColor = 'yellow'; // Make the DOB cell yellow
+      // You can also add birthday icons or text here
+      dobCell.innerHTML += ' 🎂🎁';
+      isBirthdayToday = true; // Set the flag to indicate there's a birthday today
+    }
+
+    // Append the cells to the table row
+    tableRow.appendChild(nameCell);
+    tableRow.appendChild(residenceCell);
+    tableRow.appendChild(paymentCell);
+    tableRow.appendChild(sexCell);
+    tableRow.appendChild(patientIdCell);
+    tableRow.appendChild(parentsCell);
+    tableRow.appendChild(dobCell);
+    tableRow.appendChild(ageCell);
+    tableRow.appendChild(actionsCell);
+
+    // Append the row to the table
+    table.appendChild(tableRow);
   });
-  actionsCell.appendChild(viewButton);
 
-  // Append the cells to the table row
-  tableRow.appendChild(nameCell);
-  tableRow.appendChild(residenceCell);
-  tableRow.appendChild(paymentCell);
-  tableRow.appendChild(sexCell);
-  tableRow.appendChild(patientIdCell);
-  tableRow.appendChild(parentsCell);
-  tableRow.appendChild(dobCell);
-  tableRow.appendChild(ageCell);
-  tableRow.appendChild(actionsCell);
+  // Append the table to the patients container
+  patientsContainer.appendChild(table);
 
-  // Append the row to the table
-  table.appendChild(tableRow);
-});
+  // Show a detailed message if there are birthdays today
+  if (isBirthdayToday) {
+    const birthdayMessage = document.createElement('div');
+    birthdayMessage.classList.add('birthday-message'); // Add the CSS class for the animation
 
-// Append the table to the patients container
-patientsContainer.appendChild(table);
+    const messageText = document.createElement('p');
+    messageText.innerHTML = '🎉 Happy Birthday! 🎂🎁 Some patients have birthdays today! 🎉';
+
+    // Create "View" button
+    const overlay = document.getElementById('overlay')
+    const viewButton = document.createElement('button');
+    viewButton.textContent = 'View Patients';
+    viewButton.classList.add('view-button');
+    viewButton.addEventListener('click', function() {
+      // Handle the action for the "View" button
+      openBirthdayMessagePopup(patientsForPage);
+      birthdayMessagePopup.style.display = 'block';
+      overlay.style.display = 'block'
+    });
+
+
+    
+// Function to open the birthday message popup
+function openBirthdayMessagePopup(patients) {
+  const birthdayMessagePopup = document.getElementById('birthdayMessagePopup');
+  const patientsList = document.getElementById('patientsList');
+  const closePopupButton = document.getElementById('closeMessagePopup');
+
+  // Check if the necessary elements exist before proceeding
+  if (!birthdayMessagePopup || !patientsList || !closePopupButton) {
+    console.error('One or more required elements are missing.');
+    return;
+  }
+
+  const patientsTable = document.getElementById('patientsTable');
+
+  // Check if the patientsTable exists before clearing it
+  if (patientsTable) {
+    patientsTable.innerHTML = '';
+  } else {
+    console.error('patientsTable is missing.');
+  }
+
+  // Filter and populate the popup with patients who have birthdays today
+  const todayPatients = patients.filter(patient => isToday(new Date(patient.dob)));
+
+  todayPatients.forEach(patient => {
+    const row = patientsTable.insertRow();
+    const nameCell = row.insertCell(0);
+    const phoneCell = row.insertCell(1);
+  
+    nameCell.textContent = patient.name;
+    phoneCell.textContent = patient.parents;
+  });
+
+  // Display the popup
+  birthdayMessagePopup.classList.add('active');
+
+  // Handle the "Send" button click to send the birthday message to all patients
+  const sendButton = document.getElementById('sendBirthdayMessage');
+
+  // Check if the sendButton exists before attaching the click event
+  if (sendButton) {
+    sendButton.addEventListener('click', function() {
+      const birthdayMessageInput = document.getElementById('birthdayMessageInput').value;
+      const yourHospitalName = 'Sanyu Hospital';
+      const hospitalInfo = 'Katooke Wakiso District, Uganda';
+
+      // Define the function to send a message to a single patient
+      function sendMessageToPatient(patient) {
+        const message = `🎉 Happy Birthday, ${patient.name}! 🎂🎁\n\n`
+          + `From all of us at ${yourHospitalName}, we wish you a day filled with joy and happiness. 🌞\n\n`
+          + `As a birthday gift, we invite you to visit our hospital for a free comprehensive body checkup. 🩺🏥\n\n`
+          + `Your health is important to us, and we are here to ensure you have a healthy and vibrant year ahead. 💪\n\n`
+          + `Feel free to pass by and get the best care. 🚶‍♂️🚶‍♀️\n\n`
+          + `Address: ${hospitalInfo}\n\n`
+          + `Contact us at +256 708 657 717 for any inquiries. 📞`;
+
+        // Use a method or library to open a WhatsApp chat and pre-fill the message
+        window.open(`https://api.whatsapp.com/send?phone=${patient.parents}&text=${encodeURIComponent(message)}`);
+      }
+
+      // Send messages to patients with a delay between each message
+      todayPatients.forEach((patient, index) => {
+        setTimeout(() => {
+          sendMessageToPatient(patient);
+        }, index * 3000); // Adjust the delay (in milliseconds) as needed
+      });
+
+      // Close the popup
+      overlay.style.display = 'none'
+      birthdayMessagePopup.style.display = 'none';
+    });
+  } else {
+    console.error('sendBirthdayMessage button is missing.');
+  }
+
+  // Handle the "Close" button click to close the popup
+  closePopupButton.addEventListener('click', function() {
+    // Close the popup by removing the "active" class
+    birthdayMessagePopup.style.display = 'none';
+    overlay.style.display = 'none'
+  });
+}
+
+
+
+   // Create "Later" button
+   const laterButton = document.createElement('button');
+   laterButton.textContent = 'Remind Me Later';
+   laterButton.classList.add('later-button');
+   laterButton.addEventListener('click', function() {
+     // Hide the message for 10 minutes when "Later" is clicked
+     birthdayMessage.classList.remove('active');
+     setTimeout(function() {
+       birthdayMessage.classList.add('active');
+     }, 10 * 60 * 1000); // 10 minutes in milliseconds
+   });
+
+
+    // Append the elements to the message container
+    birthdayMessage.appendChild(messageText);
+    birthdayMessage.appendChild(viewButton);
+    birthdayMessage.appendChild(laterButton);
+
+    // Append the message to the patients container
+    patientsContainer.appendChild(birthdayMessage);
+
+    // Trigger the animation by adding the "active" class
+    setTimeout(function() {
+      birthdayMessage.classList.add('active');
+    }, 100);
+  }
+
 
   // Create pagination navigation
   const totalPages = Math.ceil(dataToDisplay.length / patientsPerPage);
@@ -897,7 +1049,7 @@ function printPatientCard() {
       <p><strong>Patient ID:</strong> ${patient.patientId}</p>
       <p><strong>Date of Birth:</strong> ${patient.dob}</p>
       <p><strong>Gender:</strong> ${patient.sex}</p>
-      <p style="margin-top: 20px;"><strong>Hospital Name:</strong> Bibo Medical System</p>
+      <p style="margin-top: 20px;"><strong>Hospital Name:</strong>Sanyu Hospital</p>
       <p><strong>Note:</strong> Please return to the hospital if found lost</p>
     </div>
   `;
@@ -981,6 +1133,8 @@ function openEditPopup(patientId) {
 // Add the event listener for saving edited details
 saveEditedDetailsHandler = saveEditedDetails;
 
+  // Store the current patient's ID
+  currentPatientId = patientId;
   // Fill input fields with current patient details
   document.getElementById('editedName').value = patient.name;
   document.getElementById('editedDOB').value = patient.dob;
@@ -988,8 +1142,6 @@ saveEditedDetailsHandler = saveEditedDetails;
   // Display the patient ID in the popup
   document.getElementById('patientIdDisplay').innerText = `Patient ID: ${patientId}`;
 
-  // Store the current patient's ID
-  currentPatientId = patientId;
 }
 
 // Event listener for closing the edit popup
@@ -1049,6 +1201,7 @@ saveEditedDetailsButton.addEventListener('click', saveEditedDetails);
 
 // Function to handle saving the visit
 function handleSaveVisit() {
+  if (currentPatientName) {
   // Get the values of the input fields
   const clinicianName = clinicianNameSelect.value;
   const temperature = document.getElementById('temperature').value;
@@ -1093,7 +1246,7 @@ function handleSaveVisit() {
       showMessage('Visit saved successfully!');
       
       // Reset the patient name and close the popup
-      currentPatientName = '';
+      currentPatientName = ''; // Ensure you reset it when the visit is saved
       visitPopupTitle.textContent = ''; // Clear the patient name from the popup title
       visitPopupOverlay.style.display = 'none'; // Hide the popup
       isPopupOpen = false; // Update the isPopupOpen variable
@@ -1116,11 +1269,14 @@ function handleSaveVisit() {
       $('#allergies').val(null).trigger('change'); // Reset the Select2 multiple select
    // Remove the event listener to avoid duplicates
    saveVisitButton.removeEventListener('click', handleSaveVisit);
-    })
-    .catch((error) => {
-      console.error('Error saving visit:', error);
-      showMessage('Error saving visit. Please try again.');
-    });
+  })
+  .catch((error) => {
+    console.error('Error saving visit:', error);
+    showMessage('Error saving visit. Please try again.');
+  });
+} else {
+showMessage('Invalid patient data.');
+}
 }
 // Get the "Save Visit" button element
 const saveVisitButton = document.getElementById('saveVisitBtn');
@@ -1145,6 +1301,7 @@ visitButton.addEventListener('click', (event) => {
     saveVisitButton.addEventListener('click', handleSaveVisit);
   }
 });
+
 
 // Get the close button element and add the click event listener to close the popup
 const closePopupBtn4 = document.getElementById('closePopupBtn4');
@@ -1301,7 +1458,7 @@ if (patient.image) {
   uploadLabel.className = 'upload-label';
   uploadLabel.innerHTML = `
     <i class="fas fa-cloud-upload-alt"></i>
-    Upload Patient's Image 
+    Patient's Image 
   `;
 
   const uploadInput = document.createElement('input');
@@ -2348,7 +2505,7 @@ whatsappShareButton.addEventListener('click', () => {
         const fileURL = testData.resultFileURL;
         const message = generateWhatsAppMessage(fileURL);
 
-        // Construct the WhatsApp URL with the patient's number and message using the official WhatsApp API
+        // Construct the WhatsApp URL with the patient's number and message using the official  API
         const whatsappURL = `https://api.whatsapp.com/send?phone=${patientPhoneNumber}&text=${encodeURIComponent(message)}`;
 
         // Open WhatsApp in a new tab or window
@@ -2528,27 +2685,77 @@ function getPatientVisitDetails(patientName) {
 
 // Call the function to retrieve and display the patient's visit details
 getPatientVisitDetails(patientName);
+// Define the signature popup element
+const signaturePopup = document.getElementById('signaturePopup');
+let signatureData; // Declare signatureData variable at a higher scope
 
 // Create print button
 const printButton = document.createElement('button');
 printButton.innerHTML = '<i class="fa fa-print"></i> Print Record';
 printButton.classList.add('print-button');
 
+const overlay2 = document.getElementById('overlay2')
+
+// Initialize Signature Pad with white stroke color
+const signatureCanvas = document.getElementById('signatureCanvas');
+const signaturePad = new SignaturePad(signatureCanvas, {
+});
 // Add event listener to the print button
 printButton.addEventListener('click', async () => {
   // Get the patient details and latest visit data
   const patient = await getPatientDetails(patientName);
   const latestVisitData = await getLatestVisitData(patientName);
+  // Display the signature popup when the print button is clicked
+  overlay2.style.display = 'block'
+  signaturePopup.style.display = 'block';
 
   // Call the printRecord function with patient details, record details, visit keys, visit details, and latest visit data
-  printRecord(patient, record, visitKeys, visitDetails, latestVisitData);
+  signatureData = await openSignaturePopup();
+  if (signatureData) {
+    printRecord(patient, record, visitKeys, visitDetails, latestVisitData);
+  }
 });
 
 // Append the print button to the record element
 recordElement.appendChild(printButton);
 
 
+// Clear signature
+const closeSignatureButton = document.getElementById('closeSignaturePopup');
+closeSignatureButton.addEventListener('click', () => {
+  signaturePad.clear();
+  signaturePopup.style.display = 'none';
+   overlay2.style.display = 'none'
+});
 
+// Clear signature
+const clearSignatureButton = document.getElementById('clearSignature');
+clearSignatureButton.addEventListener('click', () => {
+  signaturePad.clear();
+});
+async function openSignaturePopup() {
+  return new Promise((resolve) => {
+    const signaturePopup = document.getElementById('signaturePopup');
+    const signaturePad = new SignaturePad(document.getElementById('signatureCanvas'), {
+    });
+
+
+    const saveSignatureButton = document.getElementById('saveSignature');
+    saveSignatureButton.addEventListener('click', () => {
+      signatureData = signaturePad.toDataURL();
+      if (signatureData) {
+        signaturePopup.style.display = 'none';
+        overlay2.style.display = 'none'
+        signaturePad.clear();
+        resolve(signatureData);
+      } else {
+        alert('Please provide a signature before printing.');
+      }
+    });
+    overlay2.style.display = 'block'
+    signaturePopup.style.display = 'block';
+  });
+}
 // Create a WhatsApp share button for medical form details
 const whatsappMedicalFormButton = document.createElement('button');
 whatsappMedicalFormButton.id = 'whatsappMedicalFormButton';
@@ -2858,18 +3065,27 @@ doc.autoTable({
   },
 });
 
-// Add the doctor's signature label
-const signatureLabelX = 20;
-const signatureLabelY = doc.internal.pageSize.getHeight() - 20;
-doc.setFont('helvetica', 'normal');
-doc.setFontSize(12);
-doc.text('Doctor\'s Signature:', signatureLabelX, signatureLabelY, { align: 'left' });
+  // Add the doctor's signature label
+  const signatureLabelX = 20;
+  const signatureLabelY = doc.internal.pageSize.getHeight() - 20;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  doc.text('Doctor\'s Signature:', signatureLabelX, signatureLabelY, { align: 'left' });
 
-// Print the document
-doc.autoPrint();
+  // Use the saved signatureData for the doctor's signature
+  if (signatureData) {
+    const signatureImage = new Image();
+    signatureImage.src = signatureData;
+    const signatureImageX = 50;
+    const signatureImageY = doc.internal.pageSize.getHeight() - 30;
+    doc.addImage(signatureImage, 'PNG', signatureImageX, signatureImageY, 45, 20);
+  }
 
-// Open the print dialog
-doc.output('dataurlnewwindow');
+  // Print the document
+  doc.autoPrint();
+
+  // Open the print dialog
+  doc.output('dataurlnewwindow');
 }
 
 // Create a button for printing the test invoice
@@ -3907,6 +4123,13 @@ function updateOnlineStatus() {
     onlineStatusElement.classList.add('offline');
     overlayElement.style.display = 'block';
   }
+}
+// JavaScript code to set the current date in the popup
+const currentDateElement = document.getElementById('currentDate');
+if (currentDateElement) {
+    const currentDate = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    currentDateElement.textContent = currentDate.toLocaleDateString(undefined, options);
 }
 
 
