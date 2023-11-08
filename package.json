@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@green-api/whatsapp-api-client": "^0.3.37",
     "@toast-ui/calendar": "^2.1.3",
     "fullcalendar-scheduler": "^6.1.9",
     "jsbarcode": "^3.11.5",

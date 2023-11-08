@@ -1,4 +1,5 @@
 
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-storage.js";
 import { getDatabase, ref, remove, push, get, update, onValue, child, set } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js";
@@ -529,7 +530,7 @@ function filterPatients(patients, searchTerm) {
 let patientsData = []; // Store all patient data
 let searchResults = []; // Store search results
 let currentPage = 1;
-const patientsPerPage = 10;
+const patientsPerPage = 50;
 
 // Add event listener to search input for live search
 searchInput.addEventListener('input', () => {
@@ -560,8 +561,12 @@ onValue(patientsRef, (snapshot) => {
   renderPatients();
 });
 
+
+
+
+
 // Function to render the patients for the current page
-function renderPatients() {
+async function renderPatients() {
   patientsContainer.innerHTML = '';
 
   // Apply search filter if searchResults exist, else use patientsData
@@ -690,7 +695,7 @@ function renderPatients() {
       overlay.style.display = 'block'
     });
 
-
+ 
     
 // Function to open the birthday message popup
 function openBirthdayMessagePopup(patients) {
@@ -767,6 +772,9 @@ function openBirthdayMessagePopup(patients) {
     console.error('sendBirthdayMessage button is missing.');
   }
 
+
+
+
   // Handle the "Close" button click to close the popup
   closePopupButton.addEventListener('click', function() {
     // Close the popup by removing the "active" class
@@ -796,8 +804,11 @@ function openBirthdayMessagePopup(patients) {
     birthdayMessage.appendChild(laterButton);
 
     // Append the message to the patients container
-    patientsContainer.appendChild(birthdayMessage);
+    const firstPatient = patientsContainer.firstChild; // Get the first patient in the list
 
+    // Append 'birthdayMessage' before the first patient
+    patientsContainer.insertBefore(birthdayMessage, firstPatient);
+    
     // Trigger the animation by adding the "active" class
     setTimeout(function() {
       birthdayMessage.classList.add('active');
@@ -2658,6 +2669,7 @@ function getLatestVisitData(patientName) {
     });
 }
 
+
 function getPatientVisitDetails(patientName) {
   const visitsRef = ref(database, `patients/${patientName}/visits`);
   onValue(visitsRef, (snapshot) => {
@@ -2685,77 +2697,73 @@ function getPatientVisitDetails(patientName) {
 
 // Call the function to retrieve and display the patient's visit details
 getPatientVisitDetails(patientName);
-// Define the signature popup element
-const signaturePopup = document.getElementById('signaturePopup');
-let signatureData; // Declare signatureData variable at a higher scope
+  // Define the signature popup element
+  const signaturePopup = document.getElementById('signaturePopup');
+  let signatureData; // Declare signatureData variable at a higher scope
 
-// Create print button
-const printButton = document.createElement('button');
-printButton.innerHTML = '<i class="fa fa-print"></i> Print Record';
-printButton.classList.add('print-button');
+  // Create print button
+  const printButton = document.createElement('button');
+  printButton.innerHTML = '<i class="fa fa-print"></i> Print Record';
+  printButton.classList.add('print-button');
 
-const overlay2 = document.getElementById('overlay2')
+  const overlay2 = document.getElementById('overlay2');
 
-// Initialize Signature Pad with white stroke color
-const signatureCanvas = document.getElementById('signatureCanvas');
-const signaturePad = new SignaturePad(signatureCanvas, {
-});
-// Add event listener to the print button
-printButton.addEventListener('click', async () => {
-  // Get the patient details and latest visit data
-  const patient = await getPatientDetails(patientName);
-  const latestVisitData = await getLatestVisitData(patientName);
-  // Display the signature popup when the print button is clicked
-  overlay2.style.display = 'block'
-  signaturePopup.style.display = 'block';
+  // Initialize Signature Pad once when the page loads
+  const signatureCanvas = document.getElementById('signatureCanvas');
+  const signaturePad = new SignaturePad(signatureCanvas, { /* Add options if needed */ });
 
-  // Call the printRecord function with patient details, record details, visit keys, visit details, and latest visit data
-  signatureData = await openSignaturePopup();
-  if (signatureData) {
-    printRecord(patient, record, visitKeys, visitDetails, latestVisitData);
+  const saveSignatureButton = document.getElementById('saveSignature');
+  const closeSignatureButton = document.getElementById('closeSignaturePopup');
+
+  saveSignatureButton.addEventListener('click', () => {
+    signatureData = signaturePad.toDataURL();
+    if (signatureData) {
+      // Save the signatureData and close the popup
+      signaturePopup.style.display = 'none';
+      overlay2.style.display = 'none';
+    } else {
+      alert('Please provide a signature before saving.');
+    }
+  });
+
+  closeSignatureButton.addEventListener('click', () => {
+    // Clear the signature and close the popup
+    signaturePad.clear();
+    signaturePopup.style.display = 'none';
+    overlay2.style.display = 'none';
+  });
+
+  // Add event listener to the print button
+  printButton.addEventListener('click', async () => {
+    // Get the patient details and latest visit data
+    const patient = await getPatientDetails(patientName);
+    const latestVisitData = await getLatestVisitData(patientName);
+    
+    // Display the signature popup when the print button is clicked
+    overlay2.style.display = 'block';
+    signaturePopup.style.display = 'block';
+
+// Inside your printButton click event listener
+if (signatureData) {
+  console.log('Latest Visit Data for Printing:', latestVisitData); // Log the latestVisitData
+  printRecord(patient, record, visitKeys, visitDetails, latestVisitData);
+}
+ else {
+      alert('Please provide a signature before printing.');
+    }
+  });
+
+  // Append the print button to the record element
+  recordElement.appendChild(printButton);
+
+  // async function to show the signature popup
+  async function openSignaturePopup() {
+    overlay2.style.display = 'block';
+    signaturePopup.style.display = 'block';
   }
-});
-
 // Append the print button to the record element
 recordElement.appendChild(printButton);
 
-
-// Clear signature
-const closeSignatureButton = document.getElementById('closeSignaturePopup');
-closeSignatureButton.addEventListener('click', () => {
-  signaturePad.clear();
-  signaturePopup.style.display = 'none';
-   overlay2.style.display = 'none'
-});
-
-// Clear signature
-const clearSignatureButton = document.getElementById('clearSignature');
-clearSignatureButton.addEventListener('click', () => {
-  signaturePad.clear();
-});
-async function openSignaturePopup() {
-  return new Promise((resolve) => {
-    const signaturePopup = document.getElementById('signaturePopup');
-    const signaturePad = new SignaturePad(document.getElementById('signatureCanvas'), {
-    });
-
-
-    const saveSignatureButton = document.getElementById('saveSignature');
-    saveSignatureButton.addEventListener('click', () => {
-      signatureData = signaturePad.toDataURL();
-      if (signatureData) {
-        signaturePopup.style.display = 'none';
-        overlay2.style.display = 'none'
-        signaturePad.clear();
-        resolve(signatureData);
-      } else {
-        alert('Please provide a signature before printing.');
-      }
-    });
-    overlay2.style.display = 'block'
-    signaturePopup.style.display = 'block';
-  });
-}
 // Create a WhatsApp share button for medical form details
 const whatsappMedicalFormButton = document.createElement('button');
 whatsappMedicalFormButton.id = 'whatsappMedicalFormButton';
@@ -2819,7 +2827,6 @@ function generateMedicalFormWhatsAppMessage(patient, latestVisitData, medication
 
 function generateLatestVisitDetails(latestVisitData) {
   if (latestVisitData) {
-    console.log('Latest visit data:', latestVisitData); // Debugging line
     // Customize this based on the fields you want to include
     const date = formatDate(latestVisitData.timestamp);
     const clinicianName = latestVisitData.clinicianName || 'N/D';
@@ -2877,7 +2884,6 @@ function generateLatestVisitDetailsFromDisplay() {
 // ...
 // Function to print the record
 function printRecord(patient, record, visitKeys, visitDetails, latestVisitData) {
-
 window.jsPDF = window.jspdf.jsPDF;
 // Create a new jsPDF instance
 const doc = new jsPDF();
