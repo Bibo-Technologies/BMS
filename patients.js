@@ -2725,7 +2725,13 @@ getPatientVisitDetails(patientName);
       alert('Please provide a signature before saving.');
     }
   });
+  const clearSignatureButton = document.getElementById('clearSignature');
 
+  clearSignatureButton.addEventListener('click', () => {
+    // Clear the signature
+    signaturePad.clear();
+  });
+  
   closeSignatureButton.addEventListener('click', () => {
     // Clear the signature and close the popup
     signaturePad.clear();
