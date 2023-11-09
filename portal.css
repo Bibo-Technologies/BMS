@@ -5369,6 +5369,8 @@ ul.notifications {
   display: none;
   z-index: 9999;
   width: 60%;
+  position: fixed;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
 
 }
 .popup {
@@ -7777,6 +7779,7 @@ label[for="followUpDateTime"] {
   font-style: italic;
   margin: 5px; /* Add some margin to separate the time from the message content */
 }
+
 .details-popup::-webkit-scrollbar,
 #labRequestsPopup::-webkit-scrollbar {
   width: 8px;
@@ -9749,13 +9752,13 @@ button{
 border-radius: 10px;
   margin-bottom: 0;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-
+width: 100%;
 
 }
 
 /* Style the header */
 .action-header {
-  font-size: 20px;
+  font-size: 30px;
   font-weight: bold;
   margin-bottom: 10px;
 }
@@ -9835,4 +9838,134 @@ color: black;
 
 .WishesPopup button:hover {
   background-color: #45a049;
+}
+/* Add this CSS to your stylesheet or in a style tag in your HTML document */
+
+/* Chat container styling */
+#chatContainer {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: auto;
+  margin-top: 10px;
+  float: right;
+  background-color: whitesmoke;
+  margin-bottom: 20px
+}
+/* Add this to your CSS file or style tag */
+
+#chatBox {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.chatMessage {
+  margin-bottom: 10px;
+}
+
+.chatMessage span {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.chatMessage span.sender {
+  font-weight: bold;
+  color: #007bff; /* You can change the color */
+}
+
+.chatMessage span.timestamp {
+  font-size: 0.8em;
+  color: #888;
+}
+
+#messageInput {
+  width: 80%;
+  padding: 5px;
+  margin-top: 10px;
+}
+
+#sendMessageBtn {
+  width: 18%;
+  padding: 7px;
+  margin-top: 10px;
+  background-color: #007bff; /* You can change the color */
+  color: #fff;
+  cursor: pointer;
+}
+
+#sendMessageBtn:hover {
+  background-color: #0056b3; /* You can change the hover color */
+}
+
+
+/* Chat message styling */
+.messageDiv {
+  padding: 5px;
+  margin-bottom: 5px;
+  background-color:green;
+  border-radius: 5px;
+}
+
+/* Add this to your CSS file or style tag */
+
+.patients-reception {
+  color: #007bff; /* Color for Patients Reception messages */
+  text-align: right;
+
+  margin: 10px;
+  padding: 10px;
+  display: grid;
+  place-items: right;
+}
+
+
+.other-sender {
+  color: #333; /* Color for other senders' messages */
+    text-align: left;
+      background: #fff;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+          display: grid;
+          place-items: left;
+border-radius: 10px;
+margin:10px;
+padding:10px;
+width: fit-content;
+}
+.message-header {
+  justify-content: space-between;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.message-input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 500px; /* Adjust the maximum width as needed */
+  margin: 10px;
+  float: right;
+}
+
+#messageInput {
+
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px 0 0 5px;
+  width: 100%;
+}
+
+#sendMessageBtn {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+}
+
+#sendMessageBtn i {
+  font-size: 20px;
 }

@@ -393,14 +393,31 @@ fullscreenButton.addEventListener('click', function() {
               <!-- Pagination buttons will be rendered here -->
             </div>
 <div  class="action-center">
+               <div  class="action-header">Chat Room</div>
+
+  <div id="chatContainer">
+          <div id="chatBox"></div>
+          <div class="message-input-container">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button id="sendMessageBtn">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+          
+          
+        </div>
           <!-- Header of the action center -->
-             <div  class="action-header">Action Center</div>
-          <button style="display: none;" class="send-button" id="">Send Message</button>         
+          <div  class="action-header">Action Center</div>
 
           <span id="actionCenter"></span>
           <!-- Button to send a message -->
         
         </div>
+
+
+       
+        
+
         <!-- Popup Overlay -->
         <div class="popup-overlay" id="popupOverlay1">
           <div class="popup">
@@ -573,9 +590,9 @@ bloodPressureInput.addEventListener('input', (event) => {
     <span class="popup-close" id="closeEditPopup">&times;</span>
     <h2>Edit Patient Details</h2>
     <p id="patientIdDisplay"></p>
-    <input type="text" id="editedName" placeholder="Name">
-    <input type="date" id="editedDOB" placeholder="Date of Birth">
-    <input type="tel" id="editedTel" placeholder="Telephone Contact">
+    <input type="text" id="editedName" placeholder="Name" required>
+    <input type="date" id="editedDOB" placeholder="Date of Birth" required>
+    <input type="tel" id="editedTel" placeholder="Telephone Contact" required>
     <button id="saveEditedDetails" class="button save-button">Save Changes</button>
   </div>
 </div>

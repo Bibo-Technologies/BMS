@@ -3589,3 +3589,117 @@ window.addEventListener('offline', updateOnlineStatus);
         splashScreen.style.display = 'none';
       }, 500); // Change this duration to control how long the splash screen is shown (in milliseconds)
     });
+
+
+
+    
+ // Get a reference to the database
+const messagesRef = ref(database, 'chat-messages');
+const chatBox = document.getElementById('chatBox');
+const messageInput = document.getElementById('messageInput');
+const sendMessageBtn = document.getElementById('sendMessageBtn');
+
+// Audio for message sent
+const messageSentAudio = new Audio('');
+
+// Audio for new message received
+const newMessageAudio = new Audio('interface-124464.mp3');
+
+// Listen for new messages
+onValue(messagesRef, (snapshot) => {
+  // Clear existing messages in the UI
+  chatBox.innerHTML = '';
+
+  if (snapshot.exists()) {
+    snapshot.forEach((childSnapshot) => {
+      const message = childSnapshot.val();
+      displayChatMessage(message);
+      playMessageSound(message.sender);
+    });
+  }
+});
+
+// Function to display messages in the chatBox
+function displayChatMessage(message) {
+  if (message) {
+    const messageDiv = document.createElement('div');
+
+    // Display sender's name in the header
+    const headerDiv = document.createElement('div');
+    headerDiv.classList.add('message-header');
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = message.sender;
+    nameSpan.style.fontWeight = 'bold';
+    headerDiv.appendChild(nameSpan);
+
+    messageDiv.appendChild(headerDiv);
+
+    // Display message text
+    const messageTextSpan = document.createElement('span');
+    messageTextSpan.textContent = message.text;
+    messageDiv.appendChild(messageTextSpan);
+
+    // Display timestamp in 6:00 pm format
+    const timestampSpan = document.createElement('span');
+    const timestamp = new Date(message.timestamp);
+    const formattedDate = `${timestamp.toLocaleDateString()} `;
+    const formattedTime = `${timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    timestampSpan.textContent = `${formattedDate}${formattedTime}`;
+    timestampSpan.style.fontSize = '9px'; // Set font size for the timestamp
+    timestampSpan.style.color = '#888'; // Set color for the timestamp
+    messageDiv.appendChild(timestampSpan);
+
+    // Add different classes based on the sender
+    if (message.sender === 'Doctors Room') {
+      messageDiv.classList.add('patients-reception');
+    } else {
+      messageDiv.classList.add('other-sender');
+    }
+
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the latest message
+  }
+}
+
+// Function to play message sound
+function playMessageSound(sender) {
+  if (sender === 'Doctors Room') {
+    messageSentAudio.play();
+  } else {
+    newMessageAudio.play();
+  }
+}
+
+// Event listener for the Send button
+sendMessageBtn.addEventListener('click', () => {
+  const messageText = messageInput.value.trim();
+  if (messageText !== '') {
+    const sender = 'Doctors Room'; // You can replace 'User' with the actual username or user ID
+    const timestamp = new Date().toISOString();
+    const message = { text: messageText, sender: sender, timestamp: timestamp };
+
+    // Save the message to Firebase
+    push(messagesRef, message)
+      .then(() => {
+        // Clear existing messages in the UI
+        chatBox.innerHTML = '';
+
+        // Fetch and display updated messages
+        onValue(messagesRef, (snapshot) => {
+          if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+              const message = childSnapshot.val();
+              displayChatMessage(message);
+              playMessageSound(message.sender);
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('Error sending message:', error);
+      });
+
+    messageInput.value = ''; // Clear the input field
+  }
+});

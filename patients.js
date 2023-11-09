@@ -586,13 +586,40 @@ function findPatientsWithBirthdaysToday() {
       });
     }
 
-    // Now you have searchResults with patients having birthdays today
-    if (searchResults.length > 0) {
-      // Display the list of patients in the action center
-      displayPatientsInActionCenter(searchResults);
-    }
-  });
+ // Check if there are patients with birthdays today
+ if (searchResults.length > 0) {
+  // Display the list of patients in the action center
+  displayPatientsInActionCenter(searchResults);
+} else {
+  // Display a message in the action center if there are no patients with birthdays today
+  displayNoBirthdaysMessage();
 }
+});
+}
+
+// Function to display a message in the action center when there are no birthdays today
+function displayNoBirthdaysMessage() {
+  const actionCenter = document.getElementById('actionCenter'); // Replace 'actionCenter' with your actual element ID
+  const messageContainer = document.createElement('div');
+
+  // Add an image
+  const image = document.createElement('img');
+  image.src = 'no results.jpg'; // Replace with the actual path to your image
+  image.alt = 'No Birthdays Today Image';
+  image.style.width = '200px'; // Adjust the width as needed
+  image.style.height = '200px'; // Adjust the height as needed
+  messageContainer.appendChild(image);
+
+  // Add the message
+  const message = document.createElement('p');
+  message.textContent = 'No birthdays today.';
+  messageContainer.appendChild(message);
+
+  // Replace the content of the action center with the message container
+  actionCenter.innerHTML = '';
+  actionCenter.appendChild(messageContainer);
+}
+
 // Function to display the list of patients in the action center
 function displayPatientsInActionCenter(patients) {
   const actionCenter = document.getElementById('actionCenter'); // Replace 'actionCenter' with your actual element ID
@@ -1346,6 +1373,12 @@ function saveEditedDetails() {
   const editedDOB = document.getElementById('editedDOB').value;
   const editedTel = document.getElementById('editedTel').value;
 
+  // Ensure none of the fields is empty
+  if (editedName.trim() === '' || editedDOB.trim() === '' || editedTel.trim() === '') {
+    showMessage('Please fill in all fields.');
+    return;
+  }
+
   // Ensure the current patient's ID is available
   if (currentPatientId) {
     const editedPatient = {
@@ -1371,6 +1404,7 @@ function saveEditedDetails() {
     showMessage('Invalid patient data.');
   }
 }
+
 
 // Event listener for saving edited details
 const saveEditedDetailsButton = document.getElementById('saveEditedDetails');
@@ -4341,3 +4375,114 @@ window.addEventListener('load', function () {
         splashScreen.style.display = 'none';
       }, 500); // Change this duration to control how long the splash screen is shown (in milliseconds)
     });
+
+ // Get a reference to the database
+const messagesRef = ref(database, 'chat-messages');
+const chatBox = document.getElementById('chatBox');
+const messageInput = document.getElementById('messageInput');
+const sendMessageBtn = document.getElementById('sendMessageBtn');
+
+// Audio for message sent
+const messageSentAudio = new Audio('');
+
+// Audio for new message received
+const newMessageAudio = new Audio('interface-124464.mp3');
+
+// Listen for new messages
+onValue(messagesRef, (snapshot) => {
+  // Clear existing messages in the UI
+  chatBox.innerHTML = '';
+
+  if (snapshot.exists()) {
+    snapshot.forEach((childSnapshot) => {
+      const message = childSnapshot.val();
+      displayChatMessage(message);
+      playMessageSound(message.sender);
+    });
+  }
+});
+
+// Function to display messages in the chatBox
+function displayChatMessage(message) {
+  if (message) {
+    const messageDiv = document.createElement('div');
+
+    // Display sender's name in the header
+    const headerDiv = document.createElement('div');
+    headerDiv.classList.add('message-header');
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = message.sender;
+    nameSpan.style.fontWeight = 'bold';
+    headerDiv.appendChild(nameSpan);
+
+    messageDiv.appendChild(headerDiv);
+
+    // Display message text
+    const messageTextSpan = document.createElement('span');
+    messageTextSpan.textContent = message.text;
+    messageDiv.appendChild(messageTextSpan);
+
+    // Display timestamp in 6:00 pm format
+    const timestampSpan = document.createElement('span');
+    const timestamp = new Date(message.timestamp);
+    const formattedDate = `${timestamp.toLocaleDateString()} `;
+    const formattedTime = `${timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    timestampSpan.textContent = `${formattedDate}${formattedTime}`;
+    timestampSpan.style.fontSize = '9px'; // Set font size for the timestamp
+    timestampSpan.style.color = '#888'; // Set color for the timestamp
+    messageDiv.appendChild(timestampSpan);
+
+    // Add different classes based on the sender
+    if (message.sender === 'Patients Reception') {
+      messageDiv.classList.add('patients-reception');
+    } else {
+      messageDiv.classList.add('other-sender');
+    }
+
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the latest message
+  }
+}
+
+// Function to play message sound
+function playMessageSound(sender) {
+  if (sender === 'Patients Reception') {
+    messageSentAudio.play();
+  } else {
+    newMessageAudio.play();
+  }
+}
+
+// Event listener for the Send button
+sendMessageBtn.addEventListener('click', () => {
+  const messageText = messageInput.value.trim();
+  if (messageText !== '') {
+    const sender = 'Patients Reception'; // You can replace 'User' with the actual username or user ID
+    const timestamp = new Date().toISOString();
+    const message = { text: messageText, sender: sender, timestamp: timestamp };
+
+    // Save the message to Firebase
+    push(messagesRef, message)
+      .then(() => {
+        // Clear existing messages in the UI
+        chatBox.innerHTML = '';
+
+        // Fetch and display updated messages
+        onValue(messagesRef, (snapshot) => {
+          if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+              const message = childSnapshot.val();
+              displayChatMessage(message);
+              playMessageSound(message.sender);
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('Error sending message:', error);
+      });
+
+    messageInput.value = ''; // Clear the input field
+  }
+});
