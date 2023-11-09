@@ -389,39 +389,7 @@ onValue(patientsRef, (snapshot) => {
 
 
 
-// JavaScript logic for popupContainer
-const popupContainer = document.getElementById('popupContainer');
-const closeButton = document.getElementById('closeButton');
 
-// Event listener for the close button in popupContainer
-closeButton.addEventListener('click', hidePopup);
-
-function showPopup(message) {
-const popupMessage = document.getElementById('popupMessage');
-popupMessage.textContent = message;
-popupContainer.style.display = 'flex';
-}
-
-function hidePopup() {
-popupContainer.style.display = 'none';
-}
-
-// JavaScript logic for popupContainer2
-const popupContainer2 = document.getElementById('popupContainer2');
-const closeButton2 = document.getElementById('closeButton2');
-
-// Event listener for the close button in popupContainer2
-closeButton2.addEventListener('click', hidePopup2);
-
-function showPopup2(message) {
-const popupMessage2 = document.getElementById('popupMessage2');
-popupMessage2.textContent = message;
-popupContainer2.style.display = 'flex';
-}
-
-function hidePopup2() {
-popupContainer2.style.display = 'none';
-}
 
 // Function to filter patients based on the search term
 function filterPatients(patients, searchTerm) {
@@ -546,23 +514,49 @@ if (remainingStock < 20) {
 }
 row.appendChild(stockLevelCell);
 
-
 // Check if there are no messages in each category
 alertCategories.forEach(category => {
   if (category.messages.length === 0) {
-    category.messages.push('No medicines found!');
+    category.messages.push('No medicines found');
   }
 });
 
-// Check if there are no alert messages at all
-const allAlertMessages = alertCategories.reduce((acc, category) => acc.concat(category.messages), []);
-if (allAlertMessages.length === 0) {
-  allAlertMessages.push('No medicines found!');
+// Check if there are no alert messages other than "No medicines found"
+if (alertCategories.some(category => category.messages.some(message => message !== 'No medicines found'))) {
+  showAlert(alertCategories);
 }
 
-// Now you can display the alert messages in your HTML, e.g., in a div with an id 'alertMessages'
-const alertMessagesDiv = document.getElementById('categoryContainer');
-alertMessagesDiv.innerHTML = allAlertMessages.join('<br>');
+function showAlert(reportMessages) {
+  const customAlert = document.getElementById('customAlert');
+  const categoryContainer = document.getElementById('categoryContainer');
+  const customAlertButton = document.getElementById('customAlertButton');
+
+  categoryContainer.innerHTML = '';
+
+  reportMessages.forEach(category => {
+    const categoryTitle = document.createElement('h3');
+    categoryTitle.classList.add('category-title');
+    categoryTitle.textContent = category.categoryName;
+    categoryContainer.appendChild(categoryTitle);
+
+    category.messages.forEach(message => {
+      const alertMessage = document.createElement('p');
+      alertMessage.classList.add('alert-message');
+      alertMessage.textContent = message;
+      categoryContainer.appendChild(alertMessage);
+    });
+  });
+
+  customAlert.style.display = 'block';
+
+  customAlertButton.addEventListener('click', hideAlert);
+
+  function hideAlert() {
+    customAlert.style.display = 'none';
+    customAlertButton.removeEventListener('click', hideAlert);
+  }
+}
+
 }
 
 
@@ -774,7 +768,7 @@ function generateAndPrintReceipt(cartItemsArray) {
 const receiptContent = generateReceiptContent(cartItemsArray);
 
 // Create a new window for printing
-const printWindow = window.open('', '', 'width=600,height=600');
+const printWindow = window.open('', '', 'width=700,height=700');
 printWindow.document.open();
 printWindow.document.write(receiptContent);
 printWindow.document.close();
@@ -786,85 +780,175 @@ printWindow.print();
 function generateReceiptContent(cartItemsArray) {
 // Create the receipt header with hospital information
 const hospitalInfo = `
-  <div class="hospital-info">
-    <div class="hospital-details">
-      <h1>Sanyu Hospital</h1>
-      <p>Address: Katooke Wakiso District (Uganda)</p>
-      <p>Phone: +256 708 657 717</p>
-      <p>Email: sanyuhospital@gmail.com</p>
-    </div>
+<!-- Updated HTML structure with the hospital logo -->
+<div class="hospital-info">
+  <div class="hospital-logo">
+    <img src="sanyu.png" alt="Hospital Logo">
   </div>
+  <div class="hospital-details">
+    <h1>SANYU HOSPITAL</h1>
+    <p>Address: Katooke Wakiso District (Uganda)</p>
+    <p>Phone: +256 708 657 717</p>
+    <p>Email: sanyuhospital@gmail.com</p>
+  </div>
+</div>
+<div class="watermark">
+  <img src="sanyu.png" alt="Watermark" class="watermark-image">
+</div>
+
   <style>
-    .receipt {
-  font-family: 'Courier New', monospace; /* Use 'Courier New' or another preferred receipt-style font */
-  max-width: 300px;
-  margin: 0 auto;
-  padding: 10px;
-  border: 1px solid #ccc;
-  box-shadow: 2px 2px 5px #888;
-}
+  /* Updated CSS styles for larger receipt content */
+  /* Use the "Open Sans" font */
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300&display=swap');
+  
+  /* Updated CSS styles for larger receipt content */
+  .receipt {
+    font-family: 'Anton', sans-serif;
+        max-width: 100%; /* Fit to the paper width */
+    margin: 0 auto;
+    padding: 20px; /* Increased padding */
+    font-weight: 50px
+  }
+  .hospital-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px; /* Increased margin */
+  }
+  /* Add styles for the watermark */
+  .watermark {
+    position: absolute;
+    top: 50%; /* Position at the vertical center of the receipt */
+    left: 50%; /* Position at the horizontal center of the receipt */
+    transform: translate(-50%, -50%); /* Center the watermark */
+    z-index: -1; /* Place it behind the receipt content */
+    opacity: 0.2; /* Adjust opacity to your preference */
+  }
+  
+  .watermark-image {
+    width: 100%; /* Make the watermark cover the entire receipt */
+    height: auto;
+  }
+  
+  .hospital-info h1 {
+    font-size: 32px; /* Increased font size */
+    margin: 0;
+  }
+  
+  .hospital-details {
+    flex-grow: 1;
+    text-align: right;
+  }
+  
+  .hospital-details p {
+    font-size: 20px; /* Increased font size */
+    margin: 10px; /* Increased margin */
+  }
+  
+  .receipt-header h2 {
+    font-size: 26px; /* Increased font size */
+    text-align: center;
+    margin: 0;
+  }
+  
+  .receipt-header p {
+    font-size: 18px; /* Increased font size */
+    text-align: left;
+    margin: 10px;
+  }
+  
+  .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px; /* Increased margin */
+  }
+  
+  .receipt-table th,
+   .receipt-table td {
+    padding: 15px; /* Increased padding */
+    border: none; /* Remove borders */
+    font-size: 20px; /* Increased font size */
+    text-align: left;
+  }
+  
+  .receipt-footer {
+    text-align: right;
+    margin-top: 20px; /* Increased margin */
+  }
+  
+  .disclaimer {
+    font-size: 18px; /* Increased font size */
+    text-align: center;
+    margin-top: 30px; /* Increased margin */
+    font-style: italic;
+  }
+  
+  /* Updated CSS styles with hospital logo */
+  .hospital-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px; /* Increased margin */
+  }
+  
+  .hospital-logo {
+    margin-right: 20px; /* Add margin to separate the logo from hospital details */
+  }
+  
+  .hospital-logo img {
+    max-width: 180px; /* Adjust the max width as needed */
+    height: auto;
+  }
+  
+  .hospital-info h1 {
+    font-size: 32px; /* Increased font size */
+    margin: 0;
+  }
+  
+  .hospital-details {
+    flex-grow: 1;
+    text-align: right;
+  }
+  
+  .hospital-details p {
+    font-size: 24px; /* Increased font size */
+    margin: 10px; /* Increased margin */
+  }
 
+  .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
 
-.hospital-info {
-  text-align: center;
-  margin-bottom: 4px;
-}
+  .receipt-table th, .receipt-table td {
+    padding: 10px; /* Increased padding */
+    border: 1px solid #ccc;
+    font-size: 16px; /* Increased font size */
+  }
 
-.hospital-info h1 {
-  font-size: 20px;
-  margin: 0;
-}
+  .receipt-footer {
+    text-align: right;
+  }
 
-.receipt-header h2 {
-  font-size: 18px;
-  text-align: center;
-  margin: 0;
-}
-.receipt-header p {
-  font-size: 14px;
-  text-align: left;
-  margin: 5;
-}
+  .disclaimer {
+    font-size: 14px; /* Increased font size */
+    text-align: center;
+    margin-top: 20px; /* Increased margin */
+    font-style: italic;
+  }
 
-.receipt-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.receipt-table th, .receipt-table td {
-  padding: 5px;
-  border: 1px solid #ccc;
-}
-
-.receipt-footer {
-  text-align: right;
-
-}
-
-.disclaimer {
-  font-size: 12px;
-  text-align: center;
-  margin-top: 10px;
-  font-style: italic;
-}
-
-.hospital-details p {
-margin-bottom: 0; /* Reduce the margin here */
-font-size: small;
-}
+  
 </style>
+
 
 `;
 
 // Create a receipt header
 const receiptHeader = `
-<div class="receipt-header">
-  <h2>Medicine Purchase Receipt</h2>
-  <p>Date: ${new Date().toLocaleDateString()}</p>
-  <p>Time: ${new Date().toLocaleTimeString()}</p>
-</div>
+  <div class="receipt-header">
+    <h2>Medicine Purchase Receipt</h2>
+    <p>Date: ${new Date().toLocaleDateString()}</p>
+    <p>Time: ${new Date().toLocaleTimeString()}</p>
+  </div>
 `;
-
 
 // Create a table for receipt items
 const receiptTable = `
@@ -894,7 +978,7 @@ const disclaimer = `
 const totalCost = cartItemsArray.reduce((total, item) => total + item.totalCost, 0);
 const receiptFooter = `
   <div class="receipt-footer">
-    <p>Total Cost: ${totalCost}.00</p>
+    <p>Total Cost: Ug.shs. ${totalCost}.00</p>
   </div>
 `;
 
@@ -1132,40 +1216,8 @@ row.appendChild(actionsCell);
 
 patientsContainer.innerHTML = '';
 patientsContainer.appendChild(table);
-if (alertCategories.some((category) => category.messages.length > 0)) {
-  showAlert(alertCategories);
-}
 
-function showAlert(reportMessages) {
-const customAlert = document.getElementById('customAlert');
-const categoryContainer = document.getElementById('categoryContainer');
-const customAlertButton = document.getElementById('customAlertButton');
 
-categoryContainer.innerHTML = '';
-
-reportMessages.forEach((category) => {
-  const categoryTitle = document.createElement('h3');
-  categoryTitle.classList.add('category-title');
-  categoryTitle.textContent = category.categoryName;
-  categoryContainer.appendChild(categoryTitle);
-
-  category.messages.forEach((message) => {
-    const alertMessage = document.createElement('p');
-    alertMessage.classList.add('alert-message');
-    alertMessage.textContent = message;
-    categoryContainer.appendChild(alertMessage);
-  });
-});
-
-customAlert.style.display = 'block';
-
-customAlertButton.addEventListener('click', hideAlert);
-
-function hideAlert() {
-  customAlert.style.display = 'none';
-  customAlertButton.removeEventListener('click', hideAlert);
-}
-}
 }
 
 async function sellMedicinesInCart(cart) {
@@ -1245,11 +1297,12 @@ const patientSalesRef = push(ref(database, `medicine/${sellFormPatientName}/sale
 // Generate a unique sale ID using the `key` method
 const saleId = patientSalesRef.key;
 
-// Get the current timestamp in PC format (en-US locale)
-const currentTime = new Date().toLocaleString("en-US");
+// Get the current timestamp
+const currentTime = new Date();
 
-// Format the timestamp into date and time
-const saleDate = new Date(currentTime).toLocaleDateString();
+// Format the timestamp into MM/DD/YY format
+const saleDate = `${(currentTime.getMonth() + 1).toString().padStart(2, '0')}/${currentTime.getDate().toString().padStart(2, '0')}/${currentTime.getFullYear().toString().slice(2)}`;
+
 const saleTime = new Date(currentTime).toLocaleTimeString();
 
 // Set the value of the new sale node including the quantity, date, and time

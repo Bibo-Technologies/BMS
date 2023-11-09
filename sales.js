@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js";
-import { getDatabase, ref,remove, push,get, onValue,child,set } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js";
+import { getDatabase,update, ref,remove, push,get, onValue,child,set } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js";
 import { getAuth, onAuthStateChanged,sendPasswordResetEmail , signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js";
 const firebaseConfig = {
   apiKey: "AIzaSyCi_hufIZTzsYtdPGQtvtmKmAkkrydmn_A",
@@ -12,14 +12,71 @@ appId: "1:379729759051:web:e75528d61b02d1e4f536ce",
 measurementId: "G-H41J2WMR6S"
 };
 
-
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app); // Initialize Firebase Authentication
 
+if ('serviceWorker' in navigator) {
+window.addEventListener('load', () => {
+  navigator.serviceWorker.register('service-worker.js')
+    .then(registration => {
+      console.log('Service Worker registered with scope:', registration.scope);
+    })
+    .catch(error => {
+      console.error('Service Worker registration failed:', error);
+    });
+});
+}
 
 
-     
+let deferredPrompt;
+const installPopup = document.getElementById('installPopup');
+const installButton = document.getElementById('installButton');
+
+window.addEventListener('beforeinstallprompt', event => {
+event.preventDefault();
+deferredPrompt = event;
+
+// Show the install popup
+installPopup.style.display = 'block';
+});
+
+installButton.addEventListener('click', () => {
+// Prompt the user to install
+deferredPrompt.prompt();
+deferredPrompt.userChoice.then(choiceResult => {
+  if (choiceResult.outcome === 'accepted') {
+    console.log('User accepted the A2HS prompt');
+  } else {
+    console.log('User dismissed the A2HS prompt');
+  }
+  deferredPrompt = null;
+});
+
+// Hide the install popup
+installPopup.style.display = 'none';
+});
+
+
+
+
+function showMessage(message) {
+const messageElement = document.getElementById('message');
+messageElement.textContent = message;
+messageElement.style.display = 'block';
+
+// Hide the message after 4 seconds (4000 milliseconds)
+setTimeout(() => {
+  messageElement.style.display = 'none';
+}, 4000);
+}
+
+// Call showMessage with an empty message to hide the message on page load
+showMessage('');
+
+
+
+    
 // Ensure that authToken is defined in the global scope
 let authToken;
 let tokenExpiryTime;
@@ -265,6 +322,1149 @@ signInWithGoogle();
 }
 
 
+// Reference the "staff" node in Firebase Realtime Database
+// Function to update the staff count
+function updateStaffCount() {
+const staffRef = ref(database, "staff");
+
+get(staffRef)
+  .then(snapshot => {
+    const staffData = snapshot.val();
+    const staffCount = staffData ? Object.keys(staffData).length : 0;
+
+    // Update the staff count in the HTML
+    const staffCountElement = document.getElementById("staffCount");
+    if (staffCountElement) {
+      staffCountElement.innerText = staffCount.toString();
+    }
+  })
+  .catch(error => {
+    console.error("Error fetching staff count:", error);
+  });
+}
+
+// Function to update the patients count
+function updatePatientsCount() {
+const patientsRef = ref(database, "patients");
+
+get(patientsRef)
+  .then(snapshot => {
+    const patientsData = snapshot.val();
+    const patientsCount = patientsData ? Object.keys(patientsData).length : 0;
+
+    // Update the patients count in the HTML
+    const patientsCountElement = document.getElementById("patientsCount");
+    if (patientsCountElement) {
+      patientsCountElement.innerText = patientsCount.toString();
+    }
+  })
+  .catch(error => {
+    console.error("Error fetching patients count:", error);
+  });
+}
+
+// Update counts initially
+updateStaffCount();
+updatePatientsCount();
+
+// Refresh counts every second
+setInterval(() => {
+updateStaffCount();
+updatePatientsCount();
+}, 1000);
+
+
+
+// Function to open the popup
+function openExpenseSummaryPopup() {
+          const overlay = document.getElementById('ExpenseSummaryPopupOverlay');
+          const ExpenseSummaryPopup = document.getElementById('ExpenseSummaryPopup');
+          overlay.style.display = 'block';
+          ExpenseSummaryPopup.style.display = 'block';
+
+          // Fetch and display daily expenses when the popup is opened
+          const startDate = document.getElementById('dailystartDate').value;
+          const endDate = document.getElementById('dailyendDate').value;
+          fetchAndDisplayDailyExpenses(startDate, endDate);
+      }
+
+      // Function to close the popup
+      function closeExpenseSummaryPopup() {
+          const overlay = document.getElementById('ExpenseSummaryPopupOverlay');
+          const ExpenseSummaryPopup = document.getElementById('ExpenseSummaryPopup');
+          overlay.style.display = 'none';
+          ExpenseSummaryPopup.style.display = 'none';
+      }
+
+      // Attach click event listeners to buttons
+      document.getElementById('showPopupButton').addEventListener('click', openExpenseSummaryPopup);
+      document.getElementById('closePopupButton').addEventListener('click', closeExpenseSummaryPopup);
+
+
+
+
+// Function to filter daily expenses by date
+function filterExpensesByDate() {
+const startDateValue = document.getElementById('dailystartDate').value;
+const endDateValue = document.getElementById('dailyendDate').value;
+
+if (!startDateValue || !endDateValue) {
+  alert('Please select both start and end dates.');
+  return;
+}
+
+const startDate = new Date(startDateValue);
+const endDate = new Date(endDateValue);
+
+fetchAndDisplayDailyExpenses(startDate, endDate);
+}
+
+// Function to render the filtered daily expenses in the table
+function renderFilteredDailyExpenses(filteredExpenses) {
+const dailyExpensesTableBody = document.getElementById('dailyExpensesBody');
+dailyExpensesTableBody.innerHTML = '';
+
+filteredExpenses.forEach((expense) => {
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>${expense.date}</td>
+    <td>${expense.amount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
+    <td>${expense.expense}</td>
+    
+    <td>
+      <button class="delete-button2" onclick="deleteDailyExpense('${expense.key}')">Delete</button>
+    </td>
+  `;
+
+  dailyExpensesTableBody.appendChild(row);
+});
+}
+
+     // Add event listener to the "Filter by Date" button
+     document.getElementById('filterByDateButton').addEventListener('click', filterExpensesByDate);
+
+// Function to fetch and display the daily expenses in the table
+function fetchAndDisplayDailyExpenses(startDate, endDate) {
+const dailyExpensesRef = ref(database, 'daily_expenses');
+
+onValue(dailyExpensesRef, (snapshot) => {
+  const dailyExpensesData = snapshot.val();
+
+  if (dailyExpensesData) {
+    const dailyExpensesTableBody = document.getElementById('dailyExpensesBody');
+    dailyExpensesTableBody.innerHTML = '';
+
+    // Create an object to store daily expenses and total amount for each date
+    const dailyExpensesSummary = {};
+    let totalAmountSum = 0;  // Initialize total amount sum
+
+    for (const dateKey in dailyExpensesData) {
+      const dateExpenses = dailyExpensesData[dateKey];
+
+      // Extract the date from the Firebase key (assuming the key is in ISO format)
+      const dateParts = dateKey.split('-'); // Split the key by hyphens
+      const formattedDate = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+
+      for (const expenseKey in dateExpenses) {
+        const expenseData = dateExpenses[expenseKey];
+
+        // Check if the expense date falls within the selected date range
+        const expenseDate = new Date(expenseData.date);
+
+        if (!startDate || !endDate || (expenseDate >= startDate && expenseDate <= endDate)) {
+          if (!dailyExpensesSummary[formattedDate]) {
+            // Initialize the daily summary if it doesn't exist
+            dailyExpensesSummary[formattedDate] = {
+              count: 0,
+              totalAmount: 0,
+            };
+          }
+
+          // Update the daily summary with the current expense
+          dailyExpensesSummary[formattedDate].count++;
+          dailyExpensesSummary[formattedDate].totalAmount += expenseData.amount;
+
+          // Accumulate total amount sum
+          totalAmountSum += expenseData.amount;
+        }
+      }
+    }
+
+    // Sort the summary by date in descending order
+    const sortedDates = Object.keys(dailyExpensesSummary).sort((a, b) => {
+      const dateA = new Date(a);
+      const dateB = new Date(b);
+      return dateB - dateA;
+    });
+
+    // Iterate through the sorted daily summary and display in the table
+    for (const date of sortedDates) {
+      const summary = dailyExpensesSummary[date];
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${date}</td>
+        <td>${summary.count}</td>
+        <td>${summary.totalAmount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
+        <td>
+          <button class="details-button" data-date="${date}">Details</button>
+        </td>
+      `;
+
+      dailyExpensesTableBody.appendChild(row);
+    }
+
+// Display the total amount sum in a div
+const totalAmountSumDiv = document.getElementById('totalAmountSum');
+totalAmountSumDiv.innerHTML = `<i class="fas fa-money-bill"></i>  Table Summation : ${totalAmountSum.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
+
+    // Add event listeners to the "Details" buttons
+    const detailsButtons = document.querySelectorAll('.details-button');
+    detailsButtons.forEach((button) => {
+      button.addEventListener('click', function () {
+        // Get the date from the date cell in the same row
+        const dateCell = this.parentElement.parentElement.querySelector('td:first-child');
+        const selectedDateCellFormat = dateCell.textContent.trim(); // Trim any extra whitespace
+
+        // Convert the date to Firebase format
+        const selectedDateFirebaseFormat = convertDateToFirebaseFormat(selectedDateCellFormat);
+
+        // Call the function to show details for the selected date
+        searchAndDisplayExpensesByDate(selectedDateFirebaseFormat);
+      });
+    });
+  }
+});
+// Add event listener to the "Refresh Filter" button
+const clearFilterButton = document.getElementById('clear-filter-details');
+clearFilterButton.addEventListener('click', function () {
+// Clear the filter by calling the function with empty startDate and endDate
+fetchAndDisplayDailyExpenses(null, null);
+
+// Clear the input fields
+const startDateInput = document.getElementById('dailystartDate');
+const endDateInput = document.getElementById('dailyendDate');
+startDateInput.value = '';
+endDateInput.value = '';
+});
+
+}
+
+
+
+
+
+// Function to convert a date from 'MM/DD/YYYY' format to 'YYYY-MM-DD' format
+function convertDateToFirebaseFormat(dateString) {
+const parts = dateString.split('/');
+const year = parts[2];
+const month = parts[0].padStart(2, '0');
+const day = parts[1].padStart(2, '0');
+return `${year}-${month}-${day}`;
+}
+// Function to search and display expenses by date
+function searchAndDisplayExpensesByDate(searchDate) {
+const detailsPopup = document.getElementById('detailsPopup');
+const dailyExpensesDetails = document.getElementById('dailyExpensesDetails');
+const popupTitle = document.getElementById('popupTitle');
+
+// Update the popup title with the selected date
+popupTitle.textContent = `Expenses made on ${searchDate}`;
+
+// Clear the previous details
+dailyExpensesDetails.innerHTML = '';
+
+// Reference the Firebase node for the selected date
+const dateExpensesRef = ref(database, 'daily_expenses/' + searchDate);
+
+get(dateExpensesRef)
+  .then((snapshot) => {
+    const dateExpensesData = snapshot.val();
+
+    if (dateExpensesData) {
+      // Create a table to display expenses, their times, and delete buttons
+      const table = document.createElement('table');
+      table.classList.add('expense-table');
+
+      // Create a table header
+      const headerRow = table.createTHead().insertRow(0);
+      const expenseHeader = document.createElement('th');
+      expenseHeader.textContent = 'Expense';
+      headerRow.appendChild(expenseHeader);
+      const timeHeader = document.createElement('th');
+      timeHeader.textContent = 'Time';
+      headerRow.appendChild(timeHeader);
+      const amountHeader = document.createElement('th');
+      amountHeader.textContent = 'Amount (UGX)';
+      headerRow.appendChild(amountHeader);
+      const actionHeader = document.createElement('th');
+      actionHeader.textContent = 'Action';
+      headerRow.appendChild(actionHeader);
+
+      // Initialize total amount
+      let totalAmount = 0;
+
+       // Populate the details for the selected date
+       for (const key in dateExpensesData) {
+         const expenseData = dateExpensesData[key];
+       
+         // Create a row in the table
+         const row = table.insertRow(-1);
+         const expenseCell = row.insertCell(0);
+         const timeCell = row.insertCell(1);
+         const amountCell = row.insertCell(2);
+         const actionCell = row.insertCell(3);
+       
+        // Fill the cells with data
+        expenseCell.textContent = expenseData.expense;
+        timeCell.textContent = new Date(expenseData.date).toLocaleTimeString('en-US');
+        amountCell.textContent = expenseData.amount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' });
+
+         // Create a delete button
+         const deleteButton = document.createElement('button');
+         deleteButton.textContent = 'Delete';
+         deleteButton.classList.add('delete-button');
+
+         // Attach the event listener directly to the delete button
+         deleteButton.addEventListener('click', () => deleteDailyExpense(searchDate, key));
+
+         // Add the delete button to the action cell
+         actionCell.appendChild(deleteButton);
+               // Add the expense amount to the total
+        totalAmount += expenseData.amount;
+      }
+
+      // Create a row for the total
+      const totalRow = table.insertRow(-1);
+      const totalLabelCell = totalRow.insertCell(0);
+      totalLabelCell.textContent = 'Total:';
+      const totalAmountCell = totalRow.insertCell(1);
+      totalAmountCell.colSpan = 3;
+      totalAmountCell.textContent = totalAmount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' });
+
+      // Append the table to dailyExpensesDetails
+      dailyExpensesDetails.appendChild(table);
+    } else {
+      // Handle the case where there are no expenses for the selected date
+      dailyExpensesDetails.innerHTML = 'No expenses found for the selected date.';
+    }
+
+    // Show the details popup
+    detailsPopup.style.display = 'block';
+
+    // Add event listener to close the details popup
+    document.getElementById('closeDetailsButton').addEventListener('click', closeDetailsPopup);
+  })
+  .catch((error) => {
+    console.error('Error fetching expenses:', error);
+  });
+  
+}
+
+
+// Function to close the details popup
+function closeDetailsPopup() {
+const detailsPopup = document.getElementById('detailsPopup');
+detailsPopup.style.display = 'none';
+}
+
+
+// Function to delete an expense
+function deleteDailyExpense(date, expenseKey) {
+// Ask the user to enter the password
+const enteredPassword = window.prompt('Enter the password to delete the expense:');
+const correctPassword = 'mm'; // Replace 'your_password_here' with the actual password
+
+if (enteredPassword === correctPassword) {
+  // Reference the expense to be deleted
+  const expenseRef = ref(database, `daily_expenses/${date}/${expenseKey}`);
+
+  // Remove the expense from Firebase
+  remove(expenseRef)
+    .then(() => {
+      showMessage('Daily expense deleted successfully!');
+      // Refresh the details popup to reflect the changes
+      searchAndDisplayExpensesByDate(date);
+    })
+    .catch((error) => {
+      console.error('Error deleting expense:', error);
+    });
+} else {
+  showMessage('Password incorrect. Deletion canceled.');
+}
+}
+
+
+
+
+
+
+
+
+
+// Fetch and display the daily expenses in the table when the DOM content is loaded
+document.addEventListener('DOMContentLoaded', () => {
+fetchAndDisplayDailyExpenses();
+});
+function calculateAndDisplayTotalSums(expensesData) {
+let totalSumMonthly = 0;
+let totalSumYearly = 0;
+let totalSumAfter2Years = 0;
+let totalSumAfter3Years = 0;
+let totalSumAfter5Years = 0;
+
+for (const key in expensesData) {
+  const expenseData = expensesData[key];
+  switch (expenseData.scheme) {
+    case 'monthly':
+      totalSumMonthly += expenseData.amount;
+      break;
+    case 'yearly':
+      totalSumYearly += expenseData.amount;
+      break;
+    case 'after_2_years':
+      totalSumAfter2Years += expenseData.amount;
+      break;
+    case 'after_3_years':
+      totalSumAfter3Years += expenseData.amount;
+      break;
+    case 'after_5_years':
+      totalSumAfter5Years += expenseData.amount;
+      break;
+    default:
+      break;
+  }
+}
+
+// Update the existing information
+const totalSumMonthlyDiv = document.getElementById('totalSumMonthly');
+totalSumMonthlyDiv.textContent = `Billed (Monthly): ${totalSumMonthly.toLocaleString('en-US', {
+  style: 'currency',
+  currency: 'UGX',
+})}`;
+
+const totalSumYearlyDiv = document.getElementById('totalSumYearly');
+totalSumYearlyDiv.textContent = `Billed  (Yearly): ${totalSumYearly.toLocaleString('en-US', {
+  style: 'currency',
+  currency: 'UGX',
+})}`;
+
+const totalSumAfter2YearsDiv = document.getElementById('totalSumAfter2Years');
+totalSumAfter2YearsDiv.textContent = `Billed  (After 2 Years): ${totalSumAfter2Years.toLocaleString('en-US', {
+  style: 'currency',
+  currency: 'UGX',
+})}`;
+
+const totalSumAfter3YearsDiv = document.getElementById('totalSumAfter3Years');
+totalSumAfter3YearsDiv.textContent = `Billed  (After 3 Years): ${totalSumAfter3Years.toLocaleString('en-US', {
+  style: 'currency',
+  currency: 'UGX',
+})}`;
+
+const totalSumAfter5YearsDiv = document.getElementById('totalSumAfter5Years');
+totalSumAfter5YearsDiv.textContent = `Billed  (After 5 Years): ${totalSumAfter5Years.toLocaleString('en-US', {
+  style: 'currency',
+  currency: 'UGX',
+})}`;
+// Create a pie chart
+const expensesPieChart = document.getElementById('expensesPieChart');
+new Chart(expensesPieChart, {
+type: 'pie',
+data: {
+  labels: ['Monthly', 'Yearly', 'After 2 Years', 'After 3 Years', 'After 5 Years'],
+  datasets: [
+    {
+      data: [totalSumMonthly, totalSumYearly, totalSumAfter2Years, totalSumAfter3Years, totalSumAfter5Years],
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+      ],
+    },
+  ],
+},
+options: {
+  responsive: true,
+  maintainAspectRatio: false,
+  title: {
+    display: true,
+    text: 'Expense Distribution',
+  },
+  plugins: {
+    legend: {
+      labels: {
+        color: 'white', // Set label text color to white
+      },
+    },
+  },
+},
+});
+
+}
+
+// Function to fetch and display the schemed expenses in the table with retry mechanism
+function fetchAndDisplaySchemedExpensesWithRetry(maxRetries, retryDelay) {
+let retries = 0;
+
+function fetchSchemedExpenses() {
+  retries++;
+
+  const schemedExpensesRef = ref(database, 'schemed_expenses');
+
+  // Return a promise for the onValue event to enable retry mechanism
+  return new Promise((resolve, reject) => {
+    onValue(
+      schemedExpensesRef,
+      (snapshot) => {
+        const schemedExpensesData = snapshot.val();
+
+  if (schemedExpensesData) {
+    const schemedExpensesTableBody = document.getElementById('schemedExpensesBody');
+    schemedExpensesTableBody.innerHTML = '';
+
+    for (const key in schemedExpensesData) {
+      const expenseData = schemedExpensesData[key];
+
+      // Format the date in MM/DD/YYYY format
+      const formattedDate = new Date(expenseData.date).toLocaleDateString('en-US');
+
+      // Calculate the due date based on the payment scheme
+      const paymentScheme = expenseData.scheme;
+      const startDate = new Date(expenseData.date);
+      let dueDate;
+      if (paymentScheme === 'monthly') {
+        dueDate = new Date(startDate);
+        dueDate.setMonth(startDate.getMonth() + 1);
+      } else if (paymentScheme === 'yearly') {
+        dueDate = new Date(startDate);
+        dueDate.setFullYear(startDate.getFullYear() + 1);
+      } else if (paymentScheme === 'after_2_years') {
+        dueDate = new Date(startDate);
+        dueDate.setFullYear(startDate.getFullYear() + 2);
+      } else if (paymentScheme === 'after_3_years') {
+        dueDate = new Date(startDate);
+        dueDate.setFullYear(startDate.getFullYear() + 3);
+      } else if (paymentScheme === 'after_5_years') {
+        dueDate = new Date(startDate);
+        dueDate.setFullYear(startDate.getFullYear() + 5);
+      }
+
+      // Format the due date in MM/DD/YYYY format
+      const formattedDueDate = dueDate.toLocaleDateString('en-US');
+
+      // Calculate the number of days left between current date and due date
+      const currentDate = new Date();
+      const daysLeft = Math.ceil((dueDate - currentDate) / (1000 * 60 * 60 * 24));
+
+      // Determine the text color for the "Days Left" column based on the number of days
+      let daysLeftColorClass;
+      if (daysLeft <= 0) {
+        daysLeftColorClass = 'red-text';
+      } else if (daysLeft <= 10) {
+        daysLeftColorClass = 'orange-text';
+      } else {
+        daysLeftColorClass = 'green-text';
+      }
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${expenseData.expense}</td>
+        <td>${expenseData.amount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
+        <td>${expenseData.scheme}</td>
+        <td>${formattedDate}</td>
+        <td>${formattedDueDate}</td>
+        <td class="${daysLeftColorClass}">${daysLeft} days</td>
+        <td>
+          <button class="delete-button" data-key="${key}"><i class="fa fa-trash"></i></button>
+         <button class="renew-button" data-key="${key}"><i class="fa fa-refresh"></i></button>
+        </td>
+      `;
+
+      schemedExpensesTableBody.appendChild(row);
+    }
+
+    // Add event listeners to the "Delete" buttons
+    const deleteButtons = document.querySelectorAll('.delete-button');
+    deleteButtons.forEach((button) => {
+      button.addEventListener('click', function () {
+        const key = this.dataset.key;
+        deleteExpense(key);
+      });
+    });
+
+    // Add event listeners to the "Renew" buttons
+    const renewButtons = document.querySelectorAll('.renew-button');
+    renewButtons.forEach((button) => {
+      button.addEventListener('click', function () {
+        const key = this.dataset.key;
+        renewExpense(key);
+      });
+    });
+      // Call the function to calculate and display the total sum
+      calculateAndDisplayTotalSums(schemedExpensesData);
+      console.log('Schemed expenses fetched successfully!');
+          resolve(); // Resolve the promise when schemed expenses are fetched
+        } else {
+          // If data is not available, retry after a delay
+          if (retries < maxRetries) {
+            console.log(`Retrying in ${retryDelay} milliseconds...`);
+            setTimeout(() => {
+              fetchSchemedExpenses().then(resolve); // Retry by calling fetchSchemedExpenses again
+            }, retryDelay);
+          } else {
+            console.error('Exceeded maximum retries. Unable to fetch schemed expenses.');
+            reject(); // Reject the promise when retries are exhausted
+          }
+        }
+      },
+      (error) => {
+        console.error('Error fetching schemed expenses:', error);
+
+        if (retries < maxRetries) {
+          console.log(`Retrying in ${retryDelay} milliseconds...`);
+          setTimeout(() => {
+            fetchSchemedExpenses().then(resolve); // Retry by calling fetchSchemedExpenses again
+          }, retryDelay);
+        } else {
+          console.error('Exceeded maximum retries. Unable to fetch schemed expenses.');
+          reject(); // Reject the promise when retries are exhausted
+        }
+      }
+    );
+  });
+}
+
+// Start the initial fetch attempt
+fetchSchemedExpenses().catch(() => {
+  console.log('Initial fetch failed. Retrying...');
+  return fetchSchemedExpenses(); // Retry the initial fetch
+});
+}
+
+// Call the function with maximum retries of 3 and a retry delay of 1000 milliseconds (1 second)
+fetchAndDisplaySchemedExpensesWithRetry(3, 1000);    
+
+// Function to delete the expense from Firebase
+function deleteExpense(key) {
+// Ask the user to enter the password
+const enteredPassword = window.prompt('Enter the password to delete the expense:');
+const correctPassword = 'mm'; // Replace 'your_password_here' with the actual password
+
+if (enteredPassword === correctPassword) {
+  const expenseRef = ref(database, `schemed_expenses/${key}`);
+  remove(expenseRef)
+    .then(() => {
+      showMessage('Expense deleted successfully!');
+    })
+    .catch((error) => {
+      showMessage('Error deleting expense:', error);
+    });
+} else {
+  showMessage('Password incorrect. Deletion canceled.');
+}
+}
+
+// Function to renew the expense with the current date in Firebase
+function renewExpense(key) {
+// Ask the user to enter the password
+const enteredPassword = window.prompt('Enter the password to renew the expense:');
+const correctPassword = 'mm'; // Replace 'your_password_here' with the actual password
+
+if (enteredPassword === correctPassword) {
+  const expenseRef = ref(database, `schemed_expenses/${key}`);
+  const currentDate = new Date().toISOString();
+
+  update(expenseRef, {
+    date: currentDate
+  })
+    .then(() => {
+      showMessage('Expense renewed successfully!');
+    })
+    .catch((error) => {
+      showMessage('Error renewing expense:', error);
+    });
+} else {
+  showMessage('Password incorrect. Renewal canceled.');
+}
+}
+
+
+// Call the functions to fetch and display the expenses data
+fetchAndDisplayDailyExpenses();
+
+
+
+// Function to save the schemed expense details to Firebase
+function saveSchemeExpense(expense, amount, scheme) {
+const schemeExpensesRef = ref(database, 'schemed_expenses');
+const newSchemeExpenseRef = push(schemeExpensesRef);
+
+// Get the current date and time
+const currentDate = new Date();
+const currentDateTimeString = currentDate.toISOString(); // Convert to ISO string format
+
+// Create an object with the scheme expense details
+const schemeExpenseData = {
+  expense: expense,
+  amount: amount,
+  scheme: scheme,
+  date: currentDateTimeString // Add the date and time to the object
+};
+
+// Save the scheme expense data to Firebase
+set(newSchemeExpenseRef, schemeExpenseData)
+  .then(() => {
+    showMessage('Schemed expense details saved successfully!');
+  })
+  .catch((error) => {
+    showMessage('Error saving schemed expense details:', error);
+  });
+}
+
+
+// Add event listener to the "Save" button in the scheme popup
+const saveSchemeExpenseButton = document.getElementById('saveSchemeExpenseButton');
+saveSchemeExpenseButton.addEventListener('click', function () {
+const schemeExpenseInput = document.getElementById('schemeExpense');
+const schemeAmountInput = document.getElementById('schemeAmount');
+const schemePaymentSelect = document.getElementById('schemePayment');
+
+const schemeExpense = schemeExpenseInput.value.trim();
+const schemeAmount = parseFloat(schemeAmountInput.value);
+const schemePayment = schemePaymentSelect.value;
+
+if (schemeExpense && !isNaN(schemeAmount) && schemeAmount > 0) {
+  // Save the schemed expense details to Firebase
+  saveSchemeExpense(schemeExpense, schemeAmount, schemePayment);
+
+  // Clear the input fields
+  schemeExpenseInput.value = '';
+  schemeAmountInput.value = '';
+  
+  // Close the scheme popup
+  closeSchemePopup();
+} else {
+  alert('Please enter valid expense and amount.');
+}
+});
+
+// Function to open the scheme popup
+function openSchemePopup() {
+const schemePopupContainer = document.getElementById('schemePopupContainer');
+const schemeOverlay = document.getElementById('schemeOverlay');
+schemePopupContainer.classList.add('active');
+schemeOverlay.classList.add('active');
+}
+
+// Function to close the scheme popup
+function closeSchemePopup() {
+const schemePopupContainer = document.getElementById('schemePopupContainer');
+const schemeOverlay = document.getElementById('schemeOverlay');
+schemePopupContainer.classList.remove('active');
+schemeOverlay.classList.remove('active');
+}
+
+// Add event listener to the "Open Scheme Popup" button
+const openSchemePopupButton = document.getElementById('openSchemePopupButton');
+openSchemePopupButton.addEventListener('click', openSchemePopup);
+
+// Add event listener to the "Close" button in the scheme popup
+const schemeCloseButton = document.getElementById('schemeCloseButton');
+schemeCloseButton.addEventListener('click', closeSchemePopup);
+
+
+// Function to save the expense details to Firebase
+function saveExpenseDetails(expense, amount) {
+const expensesRef = ref(database, 'daily_expenses');
+
+// Get the current date in ISO string format (YYYY-MM-DD)
+const currentDate = new Date().toISOString().split('T')[0]; // Extract the date part
+
+// Create an object with the expense details
+const expenseData = {
+  expense: expense,
+  amount: amount,
+  date: new Date().toISOString(), // Convert the date to ISO format
+};
+
+// Save the expense data under the current date node in Firebase
+const dateNodeRef = child(expensesRef, currentDate);
+push(dateNodeRef, expenseData)
+  .then(() => {
+    showMessage('Expense details saved successfully!');
+  })
+  .catch((error) => {
+    showMessage('Error saving expense details:', error);
+  });
+}
+
+
+// Add event listener to the "Save" button in the popup
+const saveExpenseButton = document.getElementById('saveExpenseButton');
+saveExpenseButton.addEventListener('click', function () {
+const expenseInput = document.getElementById('expense');
+const amountInput = document.getElementById('amount');
+
+const expense = expenseInput.value.trim();
+const amount = parseFloat(amountInput.value);
+
+if (expense && !isNaN(amount) && amount > 0) {
+  // Save the expense details to Firebase
+  saveExpenseDetails(expense, amount);
+
+  // Clear the input fields
+  expenseInput.value = '';
+  amountInput.value = '';
+  
+  // Close the popup
+  closePopup();
+} else {
+  alert('Please enter valid expense and amount.');
+}
+});
+
+// Function to open the popup
+function openPopup() {
+const popupContainer = document.getElementById('popupContainer');
+const overlay = document.getElementById('overlay');
+popupContainer.classList.add('active');
+overlay.classList.add('active');
+}
+
+// Function to close the popup
+function closePopup() {
+const popupContainer = document.getElementById('popupContainer');
+const overlay = document.getElementById('overlay');
+popupContainer.classList.remove('active');
+overlay.classList.remove('active');
+}
+
+
+const openPopupButton = document.getElementById('openPopupButton');
+const popupContainer = document.getElementById('popupContainer');
+const overlay = document.getElementById('overlay');
+const closeButton = document.getElementById('closeButton');
+
+openPopupButton.addEventListener('click', () => {
+popupContainer.style.display = 'block';
+overlay.style.display = 'block';
+});
+
+closeButton.addEventListener('click', () => {
+popupContainer.style.display = 'none';
+overlay.style.display = 'none';
+});
+
+// Assuming you have already initialized Firebase and have a reference to the database
+// Add event listener to the "Clear Filter" button
+const clearFilterButton2 = document.getElementById('clear-filter-button2');
+clearFilterButton2.addEventListener('click', function () {
+// Reset the date inputs
+document.getElementById('start-date2').value = '';
+document.getElementById('end-date2').value = '';
+
+// Display all tests again
+fetchAndDisplayTests();
+});
+
+// Add event listener to the "Filter" button
+const filterButton2 = document.getElementById('filter-button2');
+filterButton2.addEventListener('click', function () {
+// Get the selected start and end dates
+const startDateValue = document.getElementById('start-date2').value;
+const endDateValue = document.getElementById('end-date2').value;
+
+// Convert the date strings to Date objects
+const startDate2 = new Date(startDateValue);
+const endDate2 = new Date(endDateValue);
+
+// Filter the tests based on the selected date range
+filterTestsByDate(startDate2, endDate2).then((filteredTests) => {
+  // Render the filtered tests in the table
+  renderFilteredTests(filteredTests);
+});
+});
+
+// Function to filter the tests based on the selected date range
+function filterTestsByDate(startDate2, endDate2) {
+// Get a reference to the "patients" node in Firebase
+const patientsRef = ref(database, 'patients');
+
+// Fetch the patient data from Firebase
+return get(patientsRef).then((snapshot) => {
+    const patientsData = snapshot.val();
+    const filteredTests = [];
+
+    // Check if patientsData exists and contains patient objects
+    if (patientsData) {
+      // Loop through each patient in the patientsData
+      for (const patientId in patientsData) {
+        const patient = patientsData[patientId];
+
+        // Check if the patient has the "testsTaken" node
+        if (patient.hasOwnProperty('testsTaken')) {
+          const testsTaken = patient.testsTaken;
+
+          // Loop through each test with unique identifiers
+          for (const testId in testsTaken) {
+            const testData = testsTaken[testId];
+            const dateTakenValue = testData.dateTaken;
+
+            // Check if the test date is within the selected date range
+            if (dateTakenValue >= startDate2 && dateTakenValue <= endDate2) {
+              // Add the test data to the filteredTests array
+              filteredTests.push({
+                patientId: patientId,
+                testId: testId,
+                testsTakenValue: testData.testsTaken,
+                
+                dateTakenValue: new Date(testData.dateTaken), // Convert to Date object
+                priceValue: testData.price
+              });
+            }
+            
+          }
+        }
+      }
+    }
+
+    return filteredTests;
+
+  }).catch((error) => {
+    console.error('Error fetching patients data:', error);
+    return [];
+  });
+}
+// Function to render the filtered tests in the table
+function renderFilteredTests(filteredTests) {
+  // Create a table element
+  const table = document.createElement('table');
+  table.classList.add('test-table');
+// Calculate total price
+let totalPrice = 0;
+filteredTests.forEach(test => {
+  totalPrice += test.priceValue;
+});
+// Display total price in the div
+const totalPriceDiv = document.getElementById('total-price');
+totalPriceDiv.innerHTML = `Total Tests Revenue: ${totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
+
+  // Create the table header row
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = `
+    <th>Patient</th>
+    <th>Test ID</th>
+    <th>Tests Taken</th>
+  
+    <th>Date Taken</th>
+    <th>Price (UGX)</th>
+  `;
+  table.appendChild(headerRow);
+
+  // Loop through each filtered test and create table rows
+  filteredTests.forEach(test => {
+    const row = document.createElement('tr');
+     // Format the dateTakenValue in MM/DD/YYYY format
+  const formattedDate = test.dateTakenValue.toLocaleDateString('en-US');
+
+    row.innerHTML = `
+      <td>${test.patientId}</td>
+      <td>${test.testId}</td>
+      <td>${test.testsTakenValue}</td>
+      
+      <td>${formattedDate}</td>
+      <td>${test.priceValue.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
+    `;
+    table.appendChild(row);
+  });
+
+  // Replace the existing table (if any) with the new table
+  const testTableContainer = document.getElementById('test-table-container');
+  testTableContainer.innerHTML = '';
+  testTableContainer.appendChild(table);
+}
+
+// Define variables
+let testsData = [];
+const testsPerPage = 10;
+let currentPage = 1;
+
+// Function to fetch and display tests data with pagination
+function fetchAndDisplayTestsWithPagination() {
+const testTableContainer = document.getElementById('test-table-container');
+
+// Calculate the start and end indices for the current page
+const startIndex = (currentPage - 1) * testsPerPage;
+const endIndex = startIndex + testsPerPage;
+
+// Create a subset of tests for the current page
+const testsForPage = testsData.slice(startIndex, endIndex);
+
+// Create a table element
+const table = document.createElement('table');
+table.classList.add('test-table');
+
+// Create the table header row
+const headerRow = document.createElement('tr');
+headerRow.innerHTML = `
+  <th>Patient</th>
+  <th>Test ID</th>
+  <th>Tests Taken</th>
+  <th>Date Taken</th>
+  <th>Price (UGX)</th>
+`;
+table.appendChild(headerRow);
+
+// Calculate total price while rendering the table
+let totalPrice = 0;
+
+// Loop through testsForPage and render the table
+testsForPage.forEach((test) => {
+  const { patientId, testId, testsTaken, dateTaken, price } = test;
+
+  // Format the dateTaken in MM/DD/YYYY format
+  const formattedDate = new Date(dateTaken).toLocaleDateString('en-US');
+
+  // Create a row element for each test
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td>${patientId}</td>
+    <td>${testId}</td>
+    <td>${testsTaken}</td>
+    <td>${formattedDate}</td>
+    <td>${price}</td>
+  `;
+
+  // Append the row to the table
+  table.appendChild(row);
+
+  // Add the test's price to the total price
+  totalPrice += price;
+});
+
+// Replace the existing table (if any) with the new table
+testTableContainer.innerHTML = '';
+testTableContainer.appendChild(table);
+
+// Display total price in the div
+const totalPriceDiv = document.getElementById('total-price');
+totalPriceDiv.innerHTML = `Total Tests Revenue: ${totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
+}
+
+// Function to update pagination
+function updatePagination() {
+const totalPages = Math.ceil(testsData.length / testsPerPage);
+const paginationDiv = document.getElementById('pagination');
+paginationDiv.innerHTML = '';
+
+// Create previous button
+const prevButton = document.createElement('button');
+prevButton.textContent = 'Previous';
+prevButton.addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    fetchAndDisplayTestsWithPagination();
+  }
+});
+
+// Create next button
+const nextButton = document.createElement('button');
+nextButton.textContent = 'Next';
+nextButton.addEventListener('click', () => {
+  if (currentPage < totalPages) {
+    currentPage++;
+    fetchAndDisplayTestsWithPagination();
+  }
+});
+
+// Display current page and total pages
+const pageInfo = document.createElement('span');
+pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+// Append the buttons and page info to the pagination div
+paginationDiv.appendChild(prevButton);
+paginationDiv.appendChild(pageInfo);
+paginationDiv.appendChild(nextButton);
+}
+
+// Function to fetch and display the testsTaken data in a table with retry mechanism
+function fetchAndDisplayTestsWithRetry(maxRetries, retryDelay) {
+let retries = 0;
+
+function fetchTests() {
+  retries++;
+
+  const patientsRef = ref(database, 'patients');
+
+  get(patientsRef)
+    .then((snapshot) => {
+      const patientsData = snapshot.val();
+
+      if (patientsData) {
+        // Extract and format tests data here
+        const extractedTests = extractTestsData(patientsData);
+        
+        // Set testsData to the extracted tests data
+        testsData = extractedTests;
+
+        // Update pagination and display data
+        currentPage = 1;
+        fetchAndDisplayTestsWithPagination();
+        updatePagination();
+      } else {
+        // Handle the case when there are no patients
+        showMessage('No patients data found.');
+      }
+    })
+    .catch((error) => {
+      console.error('Error fetching patients data:', error);
+
+      if (retries < maxRetries) {
+        setTimeout(fetchTests, retryDelay);
+      } else {
+        console.error('Exceeded maximum retries. Unable to display tests.');
+      }
+    });
+}
+
+fetchTests();
+}
+
+// Extract and format tests data
+function extractTestsData(patientsData) {
+const extractedTests = [];
+
+for (const patientId in patientsData) {
+  const patient = patientsData[patientId];
+
+  if (patient.hasOwnProperty('testsTaken')) {
+    const testsTaken = patient.testsTaken;
+
+    for (const testId in testsTaken) {
+      const testData = testsTaken[testId];
+      const testsTakenValue = testData.testsTaken;
+      const dateTakenValue = new Date(testData.dateTaken); // Convert to Date object
+      const priceValue = testData.price;
+
+      extractedTests.push({
+        patientId,
+        testId,
+        testsTaken: testsTakenValue,
+        dateTaken: dateTakenValue,
+        price: priceValue,
+      });
+    }
+  }
+}
+
+return extractedTests;
+}
+
+// Call the function with maximum retries of 3 and a retry delay of 1000 milliseconds (1 second)
+fetchAndDisplayTestsWithRetry(10, 1000);
+
 
 
 
@@ -307,6 +1507,8 @@ auth.signOut()
   });
 }
 
+
+
 const form = document.querySelector('.popup-form');
 const submitButton = document.querySelector('.popup-form button');
 const successMessage = document.createElement('p');
@@ -320,38 +1522,25 @@ let patients = []; // Declare patients variable outside the event listener
 
 
 
+
 function renderPatients(patients) {
-// Code to render patients goes here
-// ...
+
 }
+patientsContainer.innerHTML = '';
+
+
 
 const salesContainer = document.getElementById('salesContainer');
+// Add these lines at the beginning of your JavaScript file to get references to the filter elements
+const startDateInput = document.getElementById('start-date');
+const endDateInput = document.getElementById('end-date');
+const filterButton = document.getElementById('filter-button');
 
-// Function to delete a sale from Firebase
-function deleteSale(patientKey, saleKey) {
-// Prompt the user for confirmation
-const confirmation = confirm('Are you sure you want to delete this sale?');
-
-if (confirmation) {
-  // Get a reference to the sale node in the database
-  const saleRef = ref(database, `medicine/${patientKey}/sales/${saleKey}`);
-
-  // Remove the sale data from the database
-  return remove(saleRef)
-    .then(() => {
-      alert('Sale deleted successfully!');
-    })
-    .catch((error) => {
-      console.error('Error deleting sale:', error);
-      alert('Error deleting sale. Please try again.');
-    });
-}
-}
-
-
-// Function to render the sales table
-function renderSalesTable(sales) {
-
+// Declare the salesChart and salesTrendChart variables outside the renderSalesTable function
+let salesChart;
+let salesTrendChart;
+// Function to render the sales table and sales trend chart
+function renderSalesTable(sales, salesByDate) {
 
 // Sort the sales array by date and time in descending order
 sales.sort((a, b) => {
@@ -359,6 +1548,52 @@ const dateA = new Date(`${a.saleData.date} ${a.saleData.time}`);
 const dateB = new Date(`${b.saleData.date} ${b.saleData.time}`);
 return dateB - dateA;
 });
+
+// Add an event listener to the filter button
+filterButton.addEventListener('click', applyDateFilter);
+
+// Function to filter the sales data by date
+function applyDateFilter() {
+const startDate = new Date(startDateInput.value);
+let endDate = new Date(endDateInput.value);
+
+// Adjust the end date to the end of the day
+endDate.setHours(23, 59, 59, 999);
+
+// Fetch the original sales data (before sorting by date)
+const originalSales = [...sales];
+
+// Filter the sales data based on the date range
+const filteredSales = originalSales.filter((sale) => {
+  const [month, day, year] = sale.saleData.date.split('/').map(Number);
+  const saleDate = new Date(year, month - 1, day, 0, 0, 0, 0); // Start of the day
+
+  return saleDate >= startDate && saleDate <= endDate;
+});
+
+
+// Render the filtered sales table
+showMessage('Filter Complete');
+renderSalesTable(filteredSales);
+}
+
+
+
+
+// Get a reference to the "Clear Filter" button
+const clearFilterButton = document.getElementById('clear-filter-button');
+
+function clearDateFilter() {
+startDateInput.value = ''; // Reset the start date input
+endDateInput.value = ''; // Reset the end date input
+
+// Render the table with the original sales data
+renderSalesTable(originalSales);
+}
+
+// Add an event listener to the "Clear Filter" button
+clearFilterButton.addEventListener('click', searchByMedicine);
+
 // Create a table element
 const table = document.createElement('table');
 table.classList.add('sales-table');
@@ -368,11 +1603,29 @@ const headerRow = document.createElement('tr');
 headerRow.innerHTML = `
   <th>Medicine</th>
   <th>Quantity</th>
+  <th>Price (Ug.sh)</th>
   <th>Date</th>
   <th>Time</th>
   <th>Action</th>
 `;
 table.appendChild(headerRow);
+
+// Object to store the total incomes for each medicine
+const medicineIncomes = {};
+
+// Object to store the total sales for each day
+const salesByDay = {};
+
+
+// Destroy the existing salesChart if it exists
+if (salesChart) {
+  salesChart.destroy();
+}
+
+// Destroy the existing salesTrendChart if it exists
+if (salesTrendChart) {
+  salesTrendChart.destroy();
+}
 
 // Loop through each sale
 sales.forEach(sale => {
@@ -391,6 +1644,49 @@ sales.forEach(sale => {
   const quantityCell = document.createElement('td');
   quantityCell.textContent = saleData.quantity + ' pcs';
   row.appendChild(quantityCell);
+
+  // Get the medicine ID from the saleData
+  const medicineId = saleData.medicineId;
+
+  // Create and append the price cell
+  const priceCell = document.createElement('td');
+
+  // Fetch the medicine data from the database
+  const medicineRef = ref(database, `medicine/${patientName}`);
+  get(medicineRef).then((snapshot) => {
+    if (snapshot.exists()) {
+      const medicineData = snapshot.val();
+      const price = medicineData.price;
+      priceCell.textContent = price ? price : 'N/A';
+
+      // Calculate the total income for each medicine
+      const totalIncome = price * saleData.quantity;
+
+      // Aggregate the total income for each medicine
+      if (medicineIncomes[patientName]) {
+        medicineIncomes[patientName] += totalIncome;
+      } else {
+        medicineIncomes[patientName] = totalIncome;
+      }
+// Aggregate the total sales for each day
+const day = saleData.date;
+  if (salesByDay[day]) {
+    salesByDay[day]++;
+  } else {
+    salesByDay[day] = 1;
+  }
+      // Update the chart and total amount
+      updateChart();
+      updateTotalAmount();
+    } else {
+      priceCell.textContent = 'N/A';
+    }
+  }).catch((error) => {
+    console.log('Error fetching medicine data:', error);
+    priceCell.textContent = 'N/A';
+  });
+
+  row.appendChild(priceCell);
 
   // Create and append the sale date cell
   const dateCell = document.createElement('td');
@@ -439,9 +1735,11 @@ deleteCell.appendChild(deleteButton);
 row.appendChild(deleteCell);
 
 
+
+
 // Function to delete a sale from Firebase
 function deleteSale(patientName, saleId) {
-console.log('Deleting sale for patient:', patientName);
+console.log('Deleting sale for medicine:', patientName);
 console.log('Sale ID:', saleId);
 
 // Prompt the user for confirmation
@@ -474,6 +1772,14 @@ if (confirmation) {
 
 
 
+  // Aggregate the total sales for each day
+  const day = saleData.date;
+  if (salesByDay[day]) {
+    salesByDay[day]++;
+  } else {
+    salesByDay[day] = 1;
+  }
+
   // Append the row to the table
   table.appendChild(row);
   
@@ -485,55 +1791,346 @@ salesContainer.innerHTML = '';
 // Append the table to the sales container
 salesContainer.appendChild(table);
 
+
+// Create and update the chart
+const chartCanvas = document.getElementById('salesChart');
+if (chartCanvas) {
+updateChart();
 }
-// Function to fetch all sales data
-function fetchAllSalesData() {
-// Show the loader
-loaderElement.classList.remove('hidden');
 
-// Clear the sales container
-salesContainer.innerHTML = '';
+// Create and update the sales trend chart
+const trendChartCanvas = document.getElementById('salesTrendChart');
+if (trendChartCanvas) {
+updateSalesTrendChart();
+}
 
-// Search through Firebase for patient names by key
-const patientsRef = ref(database, 'medicine');
-onValue(patientsRef, (snapshot) => {
-  const patientsData = snapshot.val();
-  const allSales = [];
+function updateChart() {
+// Destroy the existing chart if it exists
+if (salesChart) {
+  salesChart.destroy();
+}
 
-  if (patientsData) {
-    const patients = Object.values(patientsData);
+const medicineNames = Object.keys(medicineIncomes);
+const totalIncomes = Object.values(medicineIncomes);
 
-    // Loop through all patients and collect sales data
-    patients.forEach(patient => {
-      if (patient.hasOwnProperty('sales')) {
-        const salesNode = patient.sales;
+// Sort the medicines based on their incomes in descending order
+const sortedMedicines = medicineNames
+  .map((name, index) => ({ name, income: totalIncomes[index] }))
+  .sort((a, b) => b.income - a.income);
 
-        for (const saleKey in salesNode) {
-          const saleData = salesNode[saleKey];
-          const saleId = saleKey; // Set the saleId as the key
-          allSales.push({
-            patientName: patient.name,
-            saleData: saleData,
-            saleId: saleId, // Include the saleId property
-          });
-        }
-      }
-    });
-  }
+// Get the top 5 selling medicines
+const topSellingMedicines = sortedMedicines.slice(0, 5);
 
-  // Pass the allSales array to the renderSalesTable function
-  renderSalesTable(allSales);
+const chartData = {
+  labels: medicineNames, // Use all medicine names for the chart labels
+  datasets: [
+    {
+      label: 'Estimated Income (UGX)',
+      data: totalIncomes, // Use all medicine incomes for the chart data
+      backgroundColor: 'rgba(75, 192, 192, 0.5)',
+      borderColor: 'rgba(75, 192, 192, 1)',
+      borderWidth: 1,
+    },
+  ],
+};
 
-  // Hide the loader
-  loaderElement.classList.add('hidden');
+const chartOptions = {
+  scales: {
+    y: {
+      beginAtZero: true,
+    },
+  },
+};
+
+const ctx = chartCanvas.getContext('2d');
+salesChart = new Chart(ctx, {
+  type: 'bar',
+  data: chartData,
+  options: chartOptions,
+});
+
+// Display the top selling medicines in the topSellingTable element
+const topSellingTable = document.getElementById('topsells');
+topSellingTable.innerHTML = '';
+
+// Create a table element
+const table = document.createElement('table');
+table.classList.add('topsell-table');
+
+// Create the table header row
+const headerRow = document.createElement('tr');
+headerRow.innerHTML = `
+<th>Medicine Name</th>
+<th>Income (UGX)</th>
+`;
+table.appendChild(headerRow);
+
+// Loop through each top selling medicine
+topSellingMedicines.forEach((medicine) => {
+// Create a row element for each medicine
+const row = document.createElement('tr');
+
+// Create the cell for medicine name
+const medicineNameCell = document.createElement('td');
+medicineNameCell.textContent = medicine.name;
+row.appendChild(medicineNameCell);
+
+// Create the cell for medicine income
+const medicineIncomeCell = document.createElement('td');
+medicineIncomeCell.textContent = ` ${medicine.income.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
+row.appendChild(medicineIncomeCell);
+
+// Append the row to the table
+table.appendChild(row);
+});
+
+// Append the table to the topSellingTable element
+topSellingTable.appendChild(table);
+
+}
+
+function updateSalesTrendChart() {
+// Destroy the existing chart if it exists
+if (salesTrendChart) {
+  salesTrendChart.destroy();
+}
+
+const days = Object.keys(salesByDay).reverse(); // Reverse the array of days
+const salesCount = Object.values(salesByDay).reverse(); // Reverse the array of sales counts
+
+const chartData = {
+  labels: days,
+  datasets: [
+    {
+      label: 'Sales Count by Date',
+      data: salesCount,
+      backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      borderColor: 'rgba(255, 99, 132, 1)',
+      borderWidth: 1,
+    },
+  ],
+};
+
+const chartOptions = {
+  scales: {
+    y: {
+      beginAtZero: true,
+    },
+  },
+};
+
+const ctx = trendChartCanvas.getContext('2d');
+salesTrendChart = new Chart(ctx, {
+  type: 'line',
+  data: chartData,
+  options: chartOptions,
 });
 }
+
+function updateTotalAmount() {
+const totalAmountElement = document.getElementById('totalAmount');
+const totalAmount = Object.values(medicineIncomes).reduce((acc, curr) => acc + curr, 0);
+const formattedAmount = totalAmount.toLocaleString('en');
+totalAmountElement.innerHTML = `<i class="fa fa-money earnings-icon"></i> <span class="earnings-text"><br> UGX ${formattedAmount}.00</span>`;
+}
+
+// Call the function to update the total revenue collected
+updateTotalAmount();
+
+
+let totalSalesCount = 0;
+let previousDaySalesCount = 0;
+
+// Update the sales count in the HTML
+const salesCountElement = document.getElementById('salesCount');
+
+// Iterate over the values in salesByDay and add them to the totalSalesCount
+Object.values(salesByDay).forEach(count => {
+totalSalesCount += count;
+});
+
+// Compare with the previous day's sales count and update arrow direction
+if (previousDaySalesCount > totalSalesCount) {
+// Display arrow up
+const arrowUp = '<span class="arrow-down">&#8595;</span>';
+salesCountElement.innerHTML = totalSalesCount + ' ' + arrowUp;
+} else if (previousDaySalesCount < totalSalesCount) {
+// Display arrow down
+const arrowDown = '<span class="arrow-up">&#8593;</span>';
+salesCountElement.innerHTML = totalSalesCount + ' ' + arrowDown;
+} else {
+// No change, display sales count without arrow
+salesCountElement.innerText = totalSalesCount.toString();
+}
+
+// Set previousDaySalesCount to the current totalSalesCount value
+previousDaySalesCount = totalSalesCount;
+
+}
+
+
+
+// Function to fetch all sales data with retry mechanism
+function fetchAllSalesDataWithRetry(maxRetries, retryDelay) {
+let retries = 0;
+
+function fetchSalesData() {
+  retries++;
+
+  // Show the loader
+ // loaderElement.classList.remove('hidden');
+
+  // Clear the sales container
+  salesContainer.innerHTML = '';
+
+  const patientsRef = ref(database, 'medicine');
+
+  // Return a promise for the onValue event to enable retry mechanism
+  return new Promise((resolve, reject) => {
+    onValue(
+      patientsRef,
+      (snapshot) => {
+        const patientsData = snapshot.val();
+        const allSales = [];
+        const salesByDate = {};
+
+        if (patientsData) {
+          const patients = Object.values(patientsData);
+
+          // Loop through all patients and collect sales data
+          patients.forEach((patient) => {
+            if (patient.hasOwnProperty('sales')) {
+              const salesNode = patient.sales;
+
+              for (const saleKey in salesNode) {
+                const saleData = salesNode[saleKey];
+                const saleId = saleKey; // Set the saleId as the key
+
+                const date = new Date(saleData.date); // Convert the date string to Date object
+                const dateString = date.toISOString().split('T')[0]; // Get the date in YYYY-MM-DD format
+
+                // Add the sale data to the allSales array
+                allSales.push({
+                  patientName: patient.name,
+                  saleData: saleData,
+                  saleId: saleId, // Include the saleId property
+                  date: date, // Include the date object
+                  dateString: dateString, // Include the date string
+                });
+
+                // Store the sale data in salesByDate
+                if (!salesByDate[dateString]) {
+                  salesByDate[dateString] = 0;
+                }
+                salesByDate[dateString] += saleData.amount; // Update the sales count for the date
+              }
+            }
+          });
+        }
+
+        // Pass the allSales array and salesByDate object to the renderSalesTable function
+        renderSalesTable(allSales, salesByDate);
+
+        // Hide the loader
+        loaderElement.classList.add('hidden');
+        console.log('Sales data fetched successfully!');
+        resolve(); // Resolve the promise when sales data is fetched
+      },
+      (error) => {
+        console.error('Error fetching sales data:', error);
+
+        if (retries < maxRetries) {
+          console.log(`Retrying in ${retryDelay} milliseconds...`);
+          setTimeout(() => {
+            fetchSalesData().then(resolve); // Retry by calling fetchSalesData again
+          }, retryDelay);
+        } else {
+          console.error('Exceeded maximum retries. Unable to fetch sales data.');
+          reject(); // Reject the promise when retries are exhausted
+        }
+      }
+    );
+  });
+}
+
+// Start the initial fetch attempt
+fetchSalesData().catch(() => {
+  console.log('Initial fetch failed. Retrying...');
+  return fetchSalesData(); // Retry the initial fetch
+});
+}
+
+// Call the function with maximum retries of 3 and a retry delay of 1000 milliseconds (1 second)
+fetchAllSalesDataWithRetry(3, 1000);
+
+// Reference to the 'treatment-patients' node
+const treatmentPatientsRef = ref(database, 'treatment-patients');
+
+// Initialize counts for Admitted and OPD clients
+let admittedPatientsCount = 0;
+let opdClientsCount = 0;
+
+// Listen for changes in the 'treatment-patients' node
+onValue(treatmentPatientsRef, (snapshot) => {
+  snapshot.forEach((childSnapshot) => {
+    // Check the patientStatus of each patient
+    const patientStatus = childSnapshot.child('patientStatus').val();
+
+    if (patientStatus === 'Admitted') {
+      // Count Admitted patients
+      admittedPatientsCount++;
+    } else if (patientStatus === 'OPD Client') {
+      // Count OPD clients
+      opdClientsCount++;
+    }
+  });
+
+  // Update the counts in your HTML
+  const admittedPatientsCountElement = document.getElementById('admittedPatientsCount');
+  const opdClientsCountElement = document.getElementById('opdClientsCount');
+
+  // Add console.log statements for debugging
+  console.log('Admitted Patients Count:', admittedPatientsCount);
+  console.log('OPD Clients Count:', opdClientsCount);
+
+  // Update the HTML elements
+  if (admittedPatientsCountElement) {
+    admittedPatientsCountElement.textContent = admittedPatientsCount;
+  } else {
+    console.error("Element with ID 'admittedPatientsCount' not found.");
+  }
+
+  if (opdClientsCountElement) {
+    opdClientsCountElement.textContent = opdClientsCount;
+  } else {
+    console.error("Element with ID 'opdClientsCount' not found.");
+  }
+});
 
 // Function to search sales by medicine
 function searchByMedicine() {
 const medicineInput = document.getElementById('medicineInput');
 const medicineKeyword = medicineInput.value.toLowerCase();
 
+// Function to filter patients based on the search term
+function filterPatients(patients, searchTerm) {
+const filteredPatients = patients.filter((patient) => {
+  const patientName = patient.name.toLowerCase();
+  return patientName.includes(searchTerm.toLowerCase());
+});
+renderPatients(filteredPatients);
+}
+
+// Add event listener to search input for live search
+medicineInput.addEventListener('input', () => {
+const searchTerm = medicineInput.value.trim(); // Get the search term
+const patientsRef = ref(database, 'medicine');
+onValue(patientsRef, (snapshot) => {
+  const patientsData = snapshot.val();
+  const patients = patientsData ? Object.values(patientsData) : [];
+  filterPatients(patients, searchTerm);
+});
+});
 // Show the loader
 loaderElement.classList.remove('hidden');
 
@@ -584,12 +2181,17 @@ onValue(patientsRef, (snapshot) => {
 });
 }
 
+// Get a reference to the medicine input element
+const medicineInput = document.getElementById('medicineInput');
+
+// Add event listener to medicine input for live search
+medicineInput.addEventListener('input', searchByMedicine);
 // Add event listener to search medicine button
 const searchMedicineButton = document.getElementById('searchMedicineButton');
 searchMedicineButton.addEventListener('click', searchByMedicine);
 
 // Fetch all sales data on page load
-window.addEventListener('load', fetchAllSalesData);
+window.addEventListener('load', fetchAllSalesDataWithRetry);
 
 
 const loaderElement = document.getElementById('loader');
@@ -612,7 +2214,6 @@ if (patientsData) {
 loaderElement.classList.add('hidden');
 });
 
-
 // Get the online status element
 const onlineStatusElement = document.getElementById('onlineStatus');
 const overlayElement = document.getElementById('overlay');
@@ -632,16 +2233,53 @@ if (navigator.onLine) {
 }
 }
 
+
 // Initial update of online status
 updateOnlineStatus();
 
 // Add event listeners for online and offline events
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
+
+
+function getGreeting() {
+var currentDate = new Date();
+var currentHour = currentDate.getHours();
+
+var greeting;
+if (currentHour < 12) {
+  greeting = "Good morning";
+} else if (currentHour < 18) {
+  greeting = "Good afternoon";
+} else {
+  greeting = "Good evening";
+}
+
+return greeting;
+}
+
+var greetingDiv = document.getElementById("greeting");
+var greeting = getGreeting();
+greetingDiv.textContent = greeting;
+
 window.addEventListener('load', function () {
-    const splashScreen = document.getElementById('splashScreen');
-    splashScreen.style.opacity = '0';
-    setTimeout(function () {
-      splashScreen.style.display = 'none';
-    }, 500); // Change this duration to control how long the splash screen is shown (in milliseconds)
-  });
+const splashScreen = document.getElementById('splashScreen');
+splashScreen.style.opacity = '1';
+
+// Smoothly fade out the splash screen
+setTimeout(function () {
+  splashScreen.style.transition = 'opacity 0.5s ease-in-out';
+  splashScreen.style.opacity = '0';
+  setTimeout(function () {
+    splashScreen.style.display = 'none';
+  }, 500);
+}, 1000); // The splash screen will be shown for 5 seconds
+
+// Initialize the spinner
+const spinner = new Spinner().spin();
+
+// Append the spinner to the spinner element
+const spinnerElement = document.getElementById('spinner');
+spinnerElement.appendChild(spinner.el);
+});
+

@@ -530,7 +530,7 @@ function filterPatients(patients, searchTerm) {
 let patientsData = []; // Store all patient data
 let searchResults = []; // Store search results
 let currentPage = 1;
-const patientsPerPage = 50;
+const patientsPerPage = 20;
 
 // Add event listener to search input for live search
 searchInput.addEventListener('input', () => {
@@ -561,8 +561,197 @@ onValue(patientsRef, (snapshot) => {
   renderPatients();
 });
 
+// Function to check if it's today's date (helper function)
+function isToday(date) {
+  const today = new Date();
+  return date.getDate() === today.getDate() && date.getMonth() === today.getMonth();
+}
+// Function to find patients with birthdays today in Firebase
+function findPatientsWithBirthdaysToday() {
+  const patientsRef = ref(database, 'patients');
+
+  onValue(patientsRef, (snapshot) => {
+    const patientsData = snapshot.val();
+    const searchResults = [];
+
+    if (patientsData) {
+      // Iterate through patient data to find birthdays today
+      Object.entries(patientsData).forEach(([patientId, patient]) => {
+        // Convert the DOB string to a Date object
+        const dobDate = new Date(patient.dob);
+
+        if (isToday(dobDate)) {
+          searchResults.push(patient);
+        }
+      });
+    }
+
+    // Now you have searchResults with patients having birthdays today
+    if (searchResults.length > 0) {
+      // Display the list of patients in the action center
+      displayPatientsInActionCenter(searchResults);
+    }
+  });
+}
+// Function to display the list of patients in the action center
+function displayPatientsInActionCenter(patients) {
+  const actionCenter = document.getElementById('actionCenter'); // Replace 'actionCenter' with your actual element ID
+  actionCenter.innerHTML = ''; // Clear the existing content
 
 
+  // Add a header to the action center
+  const header = document.createElement('h5');
+  header.textContent = '🎉Wow! 🎂🎁 Some patients have birthdays today! 🎉';
+  actionCenter.appendChild(header);
+// Create a table to display patients
+const patientTable = document.createElement('table'); // Use 'table' for a table format
+
+// Add a header row to the table
+const headerRow = document.createElement('tr');
+const headerNameCell = document.createElement('th');
+const headerButtonCell = document.createElement('th');
+headerNameCell.textContent = 'Patient Name';
+headerButtonCell.textContent = 'Actions';
+headerRow.appendChild(headerNameCell);
+headerRow.appendChild(headerButtonCell);
+patientTable.appendChild(headerRow);
+
+patients.forEach((patient) => {
+  // Create a table row for each patient
+  const tableRow = document.createElement('tr');
+
+  // Create a cell for patient name
+  const nameCell = document.createElement('td');
+  nameCell.textContent = patient.name;
+  // Create a cell for patient name
+  const numberCell = document.createElement('td');
+  numberCell.textContent = patient.parents;
+   const overlay5 = document.getElementById('overlay');
+    // Create a cell for the "Send Wishes" button
+    const sendWishCell = document.createElement('td');
+    const sendWishButton = document.createElement('button');
+    sendWishButton.textContent = ' 🎉Send Wishes';
+    sendWishButton.classList.add('sendBirthdayMessage'); // Add a class for styling
+    sendWishButton.addEventListener('click', () => {
+      // Handle the action to open the popup for sending wishes
+      overlay5.style.display= 'block'
+      openWishesPopup(patient);
+    });
+    sendWishCell.appendChild(sendWishButton);
+
+  // Append cells to the table row
+  tableRow.appendChild(nameCell);
+  tableRow.appendChild(sendWishCell);
+
+  // Append the table row to the table
+  patientTable.appendChild(tableRow);
+});
+
+// Append the table to the action center
+actionCenter.appendChild(patientTable);
+}
+
+// Call findPatientsWithBirthdaysToday on page load or as needed
+window.onload = function () {
+  findPatientsWithBirthdaysToday();
+};
+
+
+// Function to open the popup for sending wishes
+function openWishesPopup(patient) {
+  const WishesPopup = document.createElement('div');
+  WishesPopup.classList.add('WishesPopup');
+
+  // Create form elements for composing and sending wishes
+  const form = document.createElement('form');
+  const patientDetails = document.createElement('div');
+  patientDetails.classList.add('details');
+  patientDetails.innerHTML = `
+    <p><strong>Name:</strong> ${patient.name}</p>
+    <p><strong>Date of Birth:</strong> ${patient.dob}</p>
+    <p><strong>Contact:</strong> ${patient.parents}</p>
+  `;
+  const yourHospitalName = 'Sanyu Hospital';
+  const hospitalInfo = 'Katooke Wakiso District, Uganda';
+  const messageLabel = document.createElement('label');
+  messageLabel.textContent = 'Compose Birthday Message for:';
+  const messageInput = document.createElement('textarea');
+  messageInput.rows = 4;
+  messageInput.placeholder = 'Type your birthday wishes here...';
+  // Pre-fill the message with a template or any default content
+  messageInput.value = `🎉 Happy Birthday, ${patient.name}! 🎂🎁\n\n`
+    + `From all of us at ${yourHospitalName}, we wish you a day filled with joy and happiness. 🌞\n\n`
+    + `As a birthday gift, we invite you to visit our hospital for a free comprehensive body checkup. 🩺🏥\n\n`
+    + `Your health is important to us, and we are here to ensure you have a healthy and vibrant year ahead. 💪\n\n`
+    + `Feel free to pass by and get the best care. 🚶‍♂️🚶‍♀️\n\n`
+    + `Address: ${hospitalInfo}\n\n`
+    + `Contact us at +256 708 657 717 for any inquiries. 📞`;
+
+  const sendButton = document.createElement('button');
+  sendButton.textContent = '🎉Send Wishes';
+  sendButton.classList.add('sendBirthdayMessage');
+  sendButton.addEventListener('click', (event) => {
+    // Prevent the default form submission behavior
+    event.preventDefault();
+
+    const message = messageInput.value;
+    const recipientNumber = patient.parents; // Use the patient's number as the recipient
+    const recipientName = patient.name; // Use the patient's name as the recipient's name
+    // Call a function to send the wishes using recipientNumber, recipientName, and message
+    sendWishes(recipientNumber, recipientName, message);
+
+    closeWishesPopup(WishesPopup);
+  });
+
+  // Create close button
+  const closeButton = document.createElement('button');
+  closeButton.textContent = 'Close';
+  closeButton.classList.add('close-button');
+  closeButton.addEventListener('click', () => {
+    closeWishesPopup(WishesPopup);
+  });
+
+  // Append form elements to the form
+  form.appendChild(messageLabel);
+  form.appendChild(patientDetails);
+  form.appendChild(messageInput);
+  form.appendChild(sendButton);
+  form.appendChild(closeButton);
+
+  // Append the form to the popup
+  WishesPopup.appendChild(form);
+
+  // Append the popup to the document body
+  document.body.appendChild(WishesPopup);
+
+  // Show overlay
+  overlay5.style.display = 'block';
+}
+
+// Rest of your code...
+
+
+
+
+  const overlay5 = document.getElementById('overlay')
+
+// Function to close the popup
+function closeWishesPopup(WishesPopup) {
+  // Remove the popup from the document body 
+   // Close the popup after sending wishes
+    overlay5.style.display= 'none'
+
+  document.body.removeChild(WishesPopup);
+}
+
+// Function to send wishes (replace this with your actual implementation)
+function sendWishes(recipientNumber, recipientName, message) {
+  // Implement the logic to send wishes using the recipient's number, name, and the composed message
+  showMessage(`Sending wishes to ${recipientName}`);
+
+ // Open WhatsApp with pre-filled message using the WhatsApp Web API
+ window.open(`https://api.whatsapp.com/send?phone=${recipientNumber}&text=${encodeURIComponent(message)}`);
+}
 
 
 // Function to render the patients for the current page
@@ -587,8 +776,8 @@ async function renderPatients() {
   const tableHeaderRow = document.createElement('tr');
   tableHeaderRow.classList.add('table-header');
 
-  // Define the table header columns
-  const headers = ['Name', 'Place of Residence', 'Payment Terms', 'Sex', 'Patient ID', 'Contact', 'Date of Birth', 'Age', 'Actions'];
+ // Define the table header columns
+const headers = ['Select', 'Name', 'Residence', 'Payment Terms', 'Sex', 'Patient ID', 'Contact', 'Date of Birth', 'Age', 'Actions'];
 
   // Create the table header cells
   headers.forEach(headerText => {
@@ -621,6 +810,27 @@ async function renderPatients() {
   patientsForPage.forEach(patient => {
     // Create a table row for each patient
     const tableRow = document.createElement('tr');
+     // Create the "Select" checkbox cell
+  const selectCell = document.createElement('td');
+  const selectCheckbox = document.createElement('input');
+  selectCheckbox.type = 'checkbox';
+  selectCell.appendChild(selectCheckbox);
+  tableRow.appendChild(selectCell);
+
+  // Add a click event listener to the row
+  tableRow.addEventListener('click', () => {
+    // Toggle the checkbox when the row is clicked
+    selectCheckbox.checked = !selectCheckbox.checked;
+
+    // Add or remove a CSS class to highlight the selected row
+    if (selectCheckbox.checked) {
+      tableRow.classList.add('selected-row');
+    } else {
+      tableRow.classList.remove('selected-row');
+    }
+  });
+
+  
     tableRow.classList.add('table-row');
 
     // Create the table cells for patient information
@@ -677,23 +887,7 @@ async function renderPatients() {
 
   // Show a detailed message if there are birthdays today
   if (isBirthdayToday) {
-    const birthdayMessage = document.createElement('div');
-    birthdayMessage.classList.add('birthday-message'); // Add the CSS class for the animation
 
-    const messageText = document.createElement('p');
-    messageText.innerHTML = '🎉 Happy Birthday! 🎂🎁 Some patients have birthdays today! 🎉';
-
-    // Create "View" button
-    const overlay = document.getElementById('overlay')
-    const viewButton = document.createElement('button');
-    viewButton.textContent = 'View Patients';
-    viewButton.classList.add('view-button');
-    viewButton.addEventListener('click', function() {
-      // Handle the action for the "View" button
-      openBirthdayMessagePopup(patientsForPage);
-      birthdayMessagePopup.style.display = 'block';
-      overlay.style.display = 'block'
-    });
 
  
     
@@ -785,34 +979,8 @@ function openBirthdayMessagePopup(patients) {
 
 
 
-   // Create "Later" button
-   const laterButton = document.createElement('button');
-   laterButton.textContent = 'Remind Me Later';
-   laterButton.classList.add('later-button');
-   laterButton.addEventListener('click', function() {
-     // Hide the message for 10 minutes when "Later" is clicked
-     birthdayMessage.classList.remove('active');
-     setTimeout(function() {
-       birthdayMessage.classList.add('active');
-     }, 10 * 60 * 1000); // 10 minutes in milliseconds
-   });
 
 
-    // Append the elements to the message container
-    birthdayMessage.appendChild(messageText);
-    birthdayMessage.appendChild(viewButton);
-    birthdayMessage.appendChild(laterButton);
-
-    // Append the message to the patients container
-    const firstPatient = patientsContainer.firstChild; // Get the first patient in the list
-
-    // Append 'birthdayMessage' before the first patient
-    patientsContainer.insertBefore(birthdayMessage, firstPatient);
-    
-    // Trigger the animation by adding the "active" class
-    setTimeout(function() {
-      birthdayMessage.classList.add('active');
-    }, 100);
   }
 
 
@@ -3123,17 +3291,17 @@ function printTestInvoice(patientName, patientId, recordKey, testName) {
 // Inside the printTestInvoice function, pass the recordKey to generateInvoiceNumber
 const invoiceNumber = generateInvoiceNumber(recordKey);
 
-  // Create the content to be printed as a test invoice, including hospital credentials
-  const invoiceContent = `
-    <div class="invoice">
-      <div class="invoice-header">
-        <h2>Sanyu Hospital</h2>
-        <p>Katooke</p>
-        <p>Wakiso District (Uganda)</p>
-        <p>Phone: +256 708 657 717</p>
-        <p>Email: sanyuhospital@gmail.com</p>
-      </div>
-      <div class="invoice-details">
+// Create the content to be printed as a test invoice, including hospital credentials
+const invoiceContent = `
+  <div class="invoice">
+    <div class="invoice-header">
+      <h2>Sanyu Hospital</h2>
+      <p>Katooke</p>
+      <p>Wakiso District (Uganda)</p>
+      <p>Phone: +256 708 657 717</p>
+      <p>Email: sanyuhospital@gmail.com</p>
+    </div>
+    <div class="invoice-details">
       <h1>Test Invoice</h1>
       <p><strong>Invoice Ref:</strong> ${invoiceNumber}<p>
       <p><strong>Invoice Date:</strong> ${getCurrentDate()}</p>
@@ -3142,23 +3310,23 @@ const invoiceNumber = generateInvoiceNumber(recordKey);
       <p><strong>Test Name:</strong> ${testName}</p>
       <p><strong>Record Key:</strong> ${recordKey}</p>
     </div>
+    <div class="watermark">
+      <img src="sanyu.png" alt="Watermark" class="watermark-image">
     </div>
-  `;
+  </div>
+`;
 
-  // Create a new window for printing
-  const printWindow = window.open('', '', 'width=600,height=600');
+// Create a new window for printing
+const printWindow = window.open('', '', 'width=600,height=600');
 
-  // Set the content of the print window
-  printWindow.document.open();
-  printWindow.document.write(`<style>${invoiceStyles}</style>`);
-  printWindow.document.write(invoiceContent);
-  printWindow.document.close();
+// Set the content of the print window
+printWindow.document.open();
+printWindow.document.write(`<style>${invoiceStyles}</style>`);
+printWindow.document.write(invoiceContent);
+printWindow.document.close();
 
-  // Print the window
-  printWindow.print();
-
-  // Close the print window
-  printWindow.close();
+// Print the window
+printWindow.print();
 }
 
 // Generate the invoice number as the same value as the record key
@@ -3166,13 +3334,13 @@ function generateInvoiceNumber(recordKey) {
   return `${recordKey}`;
 }
 
-
 // Get the current date in a formatted string
 function getCurrentDate() {
   const currentDate = new Date();
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
   return currentDate.toLocaleDateString(undefined, options);
 }
+
 const invoiceStyles = `
   .invoice {
     font-family: Arial, sans-serif;
@@ -3209,6 +3377,21 @@ const invoiceStyles = `
     font-size: 18px;
     margin: 5px 0;
   }
+  /* Add styles for the watermark */
+.watermark {
+  position: absolute;
+  top: 50%; /* Position at the vertical center of the receipt */
+  left: 50%; /* Position at the horizontal center of the receipt */
+  transform: translate(-50%, -50%); /* Center the watermark */
+  z-index: -1; /* Place it behind the receipt content */
+  opacity: 0.2; /* Adjust opacity to your preference */
+}
+
+.watermark-image {
+  width: 100%; /* Make the watermark cover the entire receipt */
+  height: auto;
+}
+
 `;
 
 // Select the search input field
@@ -3614,7 +3797,7 @@ function retrieveAndDisplayLabRequests() {
   const labRequestsList = document.getElementById('labRequestsList');
   labRequestsList.innerHTML = ''; // Clear previous lab requests
 
-  const chatRef = ref(database, 'chat');
+  const chatRef = ref(database, 'lab-results');
   onValue(chatRef, (snapshot) => {
     try {
       if (snapshot.exists()) {
@@ -3744,7 +3927,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function markMessageAsDone(messageId) {
   // Update the message status in Firebase
-  const messageRef = ref(database, `chat/${messageId}`);
+  const messageRef = ref(database, `lab-results/${messageId}`);
   update(messageRef, { status: 'Completed', timestamp: Date.now() })
     .then(() => {
       console.log('Message marked as done successfully!');

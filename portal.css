@@ -31,6 +31,8 @@
   padding: 10px 20px;
   margin-left: 70px;
   z-index: 2;
+  height: 100%;
+
 }
 
 .nav-sm .navbar.nav_title {
@@ -243,6 +245,8 @@
 
 body .container.body .right_col {
   background: #F7F7F7;
+  height: 100%;
+
 }
 
 .nav-md .container.body .right_col {
@@ -254,8 +258,9 @@ body .container.body .right_col {
 .nav_title {
   width: 230px;
   float: left;
-  background: #2A3F54;
+  background: #27394b;
   border-radius: 0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
   height: 57px;
 }
 
@@ -263,6 +268,7 @@ body .container.body .right_col {
   .nav-md .container.body .right_col, .nav-md .container.body .top_nav {
     width: 100%;
     margin: 0;
+    
   }
 
   .nav-md .container.body .col-md-3.left_col {
@@ -272,6 +278,7 @@ body .container.body .right_col {
   .nav-md .container.body .right_col {
     width: 100%;
     padding-right: 0;
+    height: 100%;
   }
 
   .right_col {
@@ -9209,7 +9216,7 @@ iframe {
 /* Add some spacing between pagination and the table */
 .patient-table {
   margin-bottom: 20px;
-  margin-top: 20px;
+  margin-top: 10px;
 
 }
 .schemedExpensesContainer,
@@ -9554,7 +9561,7 @@ float: right;
 }
 /* CSS for the sliding and descending animation */
 .birthday-message {
-  position: absolute;
+  position: relative;
   opacity: 0;
   transform: translateX(-50px);
   transition: transform 0.5s ease-in-out, opacity 0.3s ease-in-out;
@@ -9642,13 +9649,14 @@ float: right;
   border-radius: 5px;
   display: none;
 }
+.sendBirthdayMessage,
 #saveSignature,
 #sendBirthdayMessage{
   background-color: green;
   color: #fff;
   padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 50px;
   cursor: pointer;
   margin-right: 10px;
   transition: background-color 0.3s;
@@ -9659,11 +9667,12 @@ float: right;
   color: #fff;
   padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 50px;
   cursor: pointer;
   margin-right: 10px;
   transition: background-color 0.3s;
 }
+.sendBirthdayMessage:hover,
 #saveSignature:hover,
 #sendBirthdayMessage:hover{
    background-color: greenyellow;
@@ -9699,7 +9708,7 @@ button{
   z-index: 10000;
   color: white;
   color: #fff;
-  max-width: 80%;
+ width:auto;
 }
 
 #signatureCanvas {
@@ -9708,5 +9717,122 @@ button{
   display: flex;
   background-color: wheat;
   margin-bottom: 20px;
+  width: 100%;
+  height: auto;
 }
 
+/* Add styles for the watermark */
+.watermark {
+  position: absolute;
+  top: 50%; /* Position at the vertical center of the receipt */
+  left: 50%; /* Position at the horizontal center of the receipt */
+  transform: translate(-50%, -50%); /* Center the watermark */
+  z-index: -1; /* Place it behind the receipt content */
+  opacity: 0.2; /* Adjust opacity to your preference */
+}
+
+.watermark-image {
+  width: 100%; /* Make the watermark cover the entire receipt */
+  height: auto;
+}
+/* Add this CSS to your stylesheet */
+.selected-row {
+  background-color: #ffffcc; /* Change to your preferred highlight color */
+}
+/* Style the action center container */
+.action-center {
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: lightgoldenrodyellow;
+  text-align: center;
+  margin-top: 30px;
+border-radius: 10px;
+  margin-bottom: 0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+
+
+}
+
+/* Style the header */
+.action-header {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Style the send message button */
+.send-button {
+  background-color: #0074D9;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 50px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+
+}
+.send-button:active{
+  background-color: darkblue;
+}
+/* CSS for the fade-out transition */
+.fadeOut {
+  opacity: 0;
+  transition: opacity 1s; /* Adjust the duration as needed */
+}
+
+
+
+/* Popup styling */
+.WishesPopup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 2px solid #ddd;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
+  max-width: 700px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.details{
+color: black;
+}
+/* Form styling */
+.WishesPopup form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Label styling */
+.WishesPopup label {
+  margin-bottom: 10px;
+  color: black;
+  font-size: larger;
+}
+
+/* Textarea styling */
+.WishesPopup textarea {
+  padding: 10px;
+  margin-bottom: 15px;
+  width: 100%;
+  resize: none;
+  height: 200px;
+  border-radius: 10px;
+}
+
+/* Button styling */
+.WishesPopup button {
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.WishesPopup button:hover {
+  background-color: #45a049;
+}

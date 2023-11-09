@@ -372,7 +372,8 @@ fullscreenButton.addEventListener('click', function() {
         
         </section>
          
-
+        
+  
              <div id="overlay"></div>
 
         <div id="loader" class="loader"></div> <!--<div class="sort-container">
@@ -391,7 +392,15 @@ fullscreenButton.addEventListener('click', function() {
             <div id="pagination" class="pagination">
               <!-- Pagination buttons will be rendered here -->
             </div>
+<div  class="action-center">
+          <!-- Header of the action center -->
+             <div  class="action-header">Action Center</div>
+          <button style="display: none;" class="send-button" id="">Send Message</button>         
 
+          <span id="actionCenter"></span>
+          <!-- Button to send a message -->
+        
+        </div>
         <!-- Popup Overlay -->
         <div class="popup-overlay" id="popupOverlay1">
           <div class="popup">
@@ -464,9 +473,7 @@ fullscreenButton.addEventListener('click', function() {
     </div>
     
     <button id="closePopupBtn4">Close</button>
- <div class="iframe-container">
-      <img src="https://bodyvisualizer.com/" frameborder="0"></ig>
-    </div>
+ 
   </div>
   
 </div>
@@ -649,35 +656,7 @@ bloodPressureInput.addEventListener('input', (event) => {
      
         </div>
       </div>
-      <div id="birthdayMessagePopup"  >
-        <div>
-            <div class="popup-header">
-                <h2>🎂🎁🎉 Birthday Messages</h2>
-                <p>Send warm birthday wishes to your patients on their special day. 🎉</p>
-            </div>
-            <div class="popup-body">
-                <p class="current-date">Today's Date: <span id="currentDate"></span></p>
-                <table id="patientsTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Phone</th>
-                        </tr>
-                    </thead>
-                    <tbody id="patientsList">
-                        <!-- Patients with birthdays today will be added here -->
-                    </tbody>
-                </table>
-                <textarea id="birthdayMessageInput" placeholder="Enter your heartfelt birthday message" rows="5"></textarea>
-            </div>
-            <div class="popup-footer">
-                <button id="sendBirthdayMessage" class="send-button">🎉 Send Wishes 🎉</button>
-                <button id="closeMessagePopup" class="close-button">Close</button>
-                  <!-- Add a button to trigger the WhatsApp message -->
-
-            </div>
-        </div>
-    </div>
+      
     <div id="overlay2"></div>
 <!-- Signature Popup -->
 <div id="signaturePopup" style="display: none;">
