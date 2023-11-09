@@ -3171,8 +3171,7 @@ window.addEventListener('offline', updateOnlineStatus);
     });
 
 
-    
- // Get a reference to the database
+    // Get a reference to the database
 const messagesRef = ref(database, 'chat-messages');
 const chatBox = document.getElementById('chatBox');
 const messageInput = document.getElementById('messageInput');
@@ -3184,16 +3183,22 @@ const messageSentAudio = new Audio('');
 // Audio for new message received
 const newMessageAudio = new Audio('interface-124464.mp3');
 
+// Array to store IDs of displayed messages
+let displayedMessageIds = [];
+
 // Listen for new messages
 onValue(messagesRef, (snapshot) => {
-  // Clear existing messages in the UI
-  chatBox.innerHTML = '';
-
   if (snapshot.exists()) {
     snapshot.forEach((childSnapshot) => {
+      const messageId = childSnapshot.key;
       const message = childSnapshot.val();
-      displayChatMessage(message);
-      playMessageSound(message.sender);
+
+      // Display the message only if it's not already displayed
+      if (!displayedMessageIds.includes(messageId)) {
+        displayChatMessage(message);
+        playMessageSound(message.sender);
+        displayedMessageIds.push(messageId);
+      }
     });
   }
 });
@@ -3260,21 +3265,6 @@ sendMessageBtn.addEventListener('click', () => {
 
     // Save the message to Firebase
     push(messagesRef, message)
-      .then(() => {
-        // Clear existing messages in the UI
-        chatBox.innerHTML = '';
-
-        // Fetch and display updated messages
-        onValue(messagesRef, (snapshot) => {
-          if (snapshot.exists()) {
-            snapshot.forEach((childSnapshot) => {
-              const message = childSnapshot.val();
-              displayChatMessage(message);
-              playMessageSound(message.sender);
-            });
-          }
-        });
-      })
       .catch((error) => {
         console.error('Error sending message:', error);
       });
