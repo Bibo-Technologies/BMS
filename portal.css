@@ -9843,22 +9843,23 @@ color: black;
 
 /* Chat container styling */
 #chatContainer {
-  width: 100%;
+  width: 70%;
   border: 1px solid #ccc;
   border-radius: 5px;
   overflow: auto;
   margin-top: 10px;
-  float: right;
+  display: inline-block;
   background-color: whitesmoke;
   margin-bottom: 20px
 }
 /* Add this to your CSS file or style tag */
 
 #chatBox {
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
   border: 1px solid #ccc;
   padding: 10px;
+  background-color: #fff;
 }
 
 .chatMessage {
@@ -9885,7 +9886,12 @@ color: black;
   padding: 5px;
   margin-top: 10px;
 }
-
+.message-input-container{
+  background-color: lightblue;
+border-radius: 10px;
+  padding: 10px;
+  width: 100%;
+}
 #sendMessageBtn {
   width: 18%;
   padding: 7px;
