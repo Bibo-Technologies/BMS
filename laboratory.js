@@ -3178,7 +3178,7 @@ const messageInput = document.getElementById('messageInput');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 
 // Audio for message sent
-const messageSentAudio = new Audio('');
+const messageSentAudio = new Audio('interface-124464.mp3');
 
 // Audio for new message received
 const newMessageAudio = new Audio('interface-124464.mp3');
