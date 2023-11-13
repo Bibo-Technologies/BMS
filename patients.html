@@ -569,7 +569,7 @@ fullscreenButton.addEventListener('click', function() {
   </form>
 </div>
 <script>
- const bloodPressureInput = document.getElementById('bp');
+const bloodPressureInput = document.getElementById('bp');
 
 bloodPressureInput.addEventListener('input', (event) => {
   const inputValue = event.target.value.replace(/\D/g, ''); // Remove non-digit characters from input
@@ -578,10 +578,13 @@ bloodPressureInput.addEventListener('input', (event) => {
     event.target.value = inputValue.slice(0, 6); // Limit to 6 characters (3 for each part)
   } else if (inputValue.length > 3) {
     const firstPart = inputValue.slice(0, 3);
-    const secondPart = inputValue.slice(3, 3);
+    const secondPart = inputValue.slice(3); // Grab everything after the first 3 characters
+
+    // Reconstruct the value with the separator '/'
     event.target.value = `${firstPart}/${secondPart}`;
   }
 });
+
 
 </script>
 <div id="editPopupOverlay"></div>

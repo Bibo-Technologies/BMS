@@ -1234,7 +1234,7 @@ function openPatientHistoryPopup(patient) {
 </button>
 
 <button style="background: darkblue; " id="printCardButton" class="button save-button">
-  <i style="margin-right: 5px;" class="fa fa-print"></i>Print Patient Card
+  <i style="margin-right: 5px;" class="fa fa-print"></i>Patient Card
 </button>
 
   </div>
@@ -4412,14 +4412,22 @@ function displayChatMessage(message) {
   if (message) {
     const messageDiv = document.createElement('div');
 
-    // Display sender's name in the header
-    const headerDiv = document.createElement('div');
-    headerDiv.classList.add('message-header');
+// Display sender's name and profile icon in the header
+const headerDiv = document.createElement('div');
+headerDiv.classList.add('message-header');
 
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = message.sender;
-    nameSpan.style.fontWeight = 'bold';
-    headerDiv.appendChild(nameSpan);
+// Creating the profile icon element (assuming it's an image)
+const profileIcon = document.createElement('img');
+profileIcon.src = 'profile.webp'; // Add the path to your profile icon image
+profileIcon.classList.add('profile-icon2');
+headerDiv.appendChild(profileIcon);
+
+// Creating the span for sender's name
+const nameSpan = document.createElement('span');
+nameSpan.textContent = message.sender;
+nameSpan.style.fontWeight = 'bold';
+headerDiv.appendChild(nameSpan);
+
 
     messageDiv.appendChild(headerDiv);
 

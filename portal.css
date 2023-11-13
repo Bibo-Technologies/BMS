@@ -5432,8 +5432,8 @@ ul.notifications {
 }
 
 .popup-close:hover {
-  color: red; /* Change to your desired hover color */
-  background-color: #ccc;
+  color: white; /* Change to your desired hover color */
+  background-color: darkred;
 }
 
 #uploadBtn {
@@ -9746,13 +9746,16 @@ button{
 .action-center {
   border: 1px solid #ccc;
   padding: 10px;
-  background-color: lightgoldenrodyellow;
+ 
+  /* Background image and overlay */
+  background-image: url('chat.jpg'); /* Add the path to your background image */
+  background-color: rgba(0, 0, 0, 0.1); /* Black color with low opacity (adjust the last value for dimming) */
   text-align: center;
   margin-top: 30px;
-border-radius: 10px;
+  border-radius: 10px;
   margin-bottom: 0;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-width: 100%;
+  width: 100%;
 
 }
 
@@ -9843,24 +9846,41 @@ color: black;
 
 /* Chat container styling */
 #chatContainer {
-  width: 70%;
+  width: 90%;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 30px;
   overflow: auto;
   margin-top: 10px;
   display: inline-block;
   background-color: whitesmoke;
-  margin-bottom: 20px
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+
 }
 /* Add this to your CSS file or style tag */
 
 #chatBox {
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
-  border: 1px solid #ccc;
+  border:transparent;
   padding: 10px;
-  background-color: #fff;
+  background: #076585; /* fallback for old browsers */
+  background: -webkit-linear-gradient(to left, #fff, #076585); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to left, #fff, #076585); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+             }
+
+/* Additional style to overlay the image with a semi-transparent layer */
+#chatBox::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Black color with low opacity (adjust the last value for dimming) */
+  z-index: -1;
 }
+ 
 
 .chatMessage {
   margin-bottom: 10px;
@@ -9869,6 +9889,7 @@ color: black;
 .chatMessage span {
   display: block;
   margin-bottom: 5px;
+  color: green;
 }
 
 .chatMessage span.sender {
@@ -9878,7 +9899,7 @@ color: black;
 
 .chatMessage span.timestamp {
   font-size: 0.8em;
-  color: #888;
+  color: green;
 }
 
 #messageInput {
@@ -9891,6 +9912,7 @@ color: black;
 border-radius: 10px;
   padding: 10px;
   width: 100%;
+float: right;
 }
 #sendMessageBtn {
   width: 18%;
@@ -9919,7 +9941,7 @@ border-radius: 10px;
 .patients-reception {
   color: #007bff; /* Color for Patients Reception messages */
   text-align: right;
-
+  border-radius: 20px;
   margin: 10px;
   padding: 10px;
   display: grid;
@@ -9948,18 +9970,26 @@ width: fit-content;
 
 .message-input-container {
   display: flex;
+  place-items: center;
   align-items: center;
   width: 100%;
   max-width: 500px; /* Adjust the maximum width as needed */
   margin: 10px;
-  float: right;
-}
+  
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
 
+}
+.profile-icon2{
+  width: 20px;
+  border-radius: 50px;
+  margin: 2px;
+}
 #messageInput {
+  margin: 0;
 
   padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 5px 0 0 5px;
+  border-radius: 20px 0 0 20px;
   width: 100%;
 }
 
@@ -9967,9 +9997,10 @@ width: fit-content;
   background-color: #007bff;
   color: #fff;
   border: none;
-  padding: 10px;
-  border-radius: 0 5px 5px 0;
+  border-radius: 0 20px 20px 0;
   cursor: pointer;
+  padding: 10px;
+  margin: 0;
 }
 
 #sendMessageBtn i {
