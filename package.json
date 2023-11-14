@@ -24,7 +24,8 @@
     "build:sales": "uglifyjs sales.js -o sales.min.js",
     "build:staff": "uglifyjs staff.js -o staff.min.js",
     "build:tests": "uglifyjs tests.js -o tests.min.js",
-    "build:all": "npm-run-all build:medicines build:index build:patients build:clinical build:doctors build:insurance build:laboratory build:odp build:sales build:staff build:tests"
+    "build:login": "uglifyjs login.js -o login.min.js",
+    "build:all": "npm-run-all build:medicines build:index build:patients build:clinical build:doctors build:insurance build:laboratory build:odp build:sales build:staff build:tests build:login"
   },
   "keywords": [],
   "author": "",

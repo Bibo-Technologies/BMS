@@ -108,87 +108,14 @@ const currentTime = new Date();
 return tokenExpiryTime > currentTime;
 }
 
-// Function to display the login overlay on page load based on token validity
 window.addEventListener('load', function() {
-retrieveTokenFromLocalStorage(); // Retrieve token from local storage
-// Check if token is valid, if not, display login overlay
-if (!isTokenValid()) {
-  document.getElementById('loginoverlay').style.display = 'block';
-  document.getElementById('loginpopup').style.display = 'block';
-  generateToken(); // Generate a new token on login overlay display
-  console.log(authToken + tokenExpiryTime)
-}
+  retrieveTokenFromLocalStorage(); // Retrieve token from local storage
+  // Check if token is valid, if not, redirect to the login page
+  if (!isTokenValid()) {
+    window.location.href = 'login.html'; // Replace 'login.html' with the URL of your login page
+  }
 });
 
-// Rest of your code...
-
-
-// Disable right-click when the popup is displayed
-document.addEventListener('contextmenu', function(event) {
-if (document.getElementById('loginpopup').style.display === 'block') {
-  event.preventDefault();
-}
-document.addEventListener('keydown', function(event) {
-if (event.keyCode === 123) {
-  event.preventDefault();
-}
-});
-
-});
-const allowedEmails = ['biboofficial256@gmail.com']; // Add the allowed email addresses here
-
-// Show a loader inside the submit button when it's clicked
-document.getElementById('loginForm').addEventListener('submit', function(event) {
-event.preventDefault(); // Prevent default form submission
-
-// Show loader inside the submit button
-const submitBtn = document.getElementById('submitBtn');
-submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting';
-
-// Get user credentials from the form
-const email = document.getElementById('email').value;
-const password = document.getElementById('password').value;
-
-// Update the login success block to generate a new token and store it
-signInWithEmailAndPassword(auth, email, password)
-.then((userCredential) => {
-  // Check if the user's email is allowed
-  if (allowedEmails.includes(email)) {
-    // Login successful, hide the login overlay and popup
-    document.getElementById('loginoverlay').style.display = 'none';
-    document.getElementById('loginpopup').style.display = 'none';
-    generateToken(); // Generate a new token on successful login
-    } else {
-      // Login not allowed, show an error message
-      const errorContainer = document.getElementById('errorContainer');
-      errorContainer.textContent = 'Access denied. You are not authorized.';
-      errorContainer.style.display = 'block'; // Show the message
-      // Log out the user since they are not authorized
-      signOut(auth)
-        .then(() => {
-          // Reset the submit button text after a short delay (e.g., 2 seconds)
-          setTimeout(function() {
-            submitBtn.innerHTML = 'Submit';
-          }, 2000);
-        })
-        .catch((error) => {
-          console.error('Error signing out:', error);
-        });
-    }
-  })
-  .catch((error) => {
-    // Login failed, display error message
-    const errorMessage = error.message;
-    const errorContainer = document.getElementById('errorContainer');
-    errorContainer.textContent = errorMessage;
-    errorContainer.style.display = 'block'; // Show the message
-
-    // Reset the submit button text after a short delay (e.g., 2 seconds)
-    setTimeout(function() {
-      submitBtn.innerHTML = 'Submit';
-    }, 2000);
-  });
-});
 
 
 
@@ -1472,39 +1399,52 @@ fetchAndDisplayTestsWithRetry(10, 1000);
 
 displayMessage('Signing in...', 'Please wait...', false); // Pass false for error message
 
+// Add event listener to all links within the website
+document.addEventListener('click', function(event) {
+  const target = event.target;
+
+  // Check if the clicked element is a link within the website
+  if (target.tagName === 'A' && target.href.startsWith(window.location.origin)) {
+    // Store the clicked link's URL in local storage
+    localStorage.setItem('clickedLink', target.href);
+  }
+});
+
 // Get the "Log Out" button element
 const logoutButton = document.getElementById("logoutButton");
 
 // Add event listener to the "Log Out" button
 logoutButton.addEventListener("click", function(event) {
-event.preventDefault();
-logOut();
+  event.preventDefault();
 
-// Trigger the sign-in popup to appear again
-var provider = new firebase.auth.GoogleAuthProvider();
-firebase.auth().signInWithPopup(provider)
-  .then(function(result) {
-    // Handle sign-in success
-    var user = result.user;
-    console.log('User signed in:', user.email);
-  })
-  .catch(function(error) {
-    // Handle sign-in error
-    console.error('Error signing in:', error);
-  });
+  // Store the current page URL in local storage
+  localStorage.setItem('logoutPage', window.location.href);
+
+  // Store the clicked link's URL in local storage
+  const clickedLink = localStorage.getItem('clickedLink');
+  if (clickedLink) {
+    localStorage.setItem('logoutPage', clickedLink);
+  }
+
+  logOut();
 });
 
 // Function to log out
 function logOut() {
-auth.signOut()
-  .then(function() {
-    console.log('User signed out');
-    // Refresh the page
-    location.reload();
-  })
-  .catch(function(error) {
-    console.error('Error signing out:', error);
-  });
+  auth.signOut()
+    .then(function() {
+      // Clear the login token and other stored values
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('tokenExpiryTime');
+      localStorage.removeItem('clickedLink');
+
+      // Redirect to the stored page URL (either clicked link or current page)
+      const logoutPage = localStorage.getItem('logoutPage') || 'login.html';
+      window.location.href = logoutPage;
+    })
+    .catch(function(error) {
+      console.error('Error signing out:', error);
+    });
 }
 
 
@@ -2280,3 +2220,62 @@ const spinnerElement = document.getElementById('spinner');
 spinnerElement.appendChild(spinner.el);
 });
 
+
+// Assuming you have a 'medicines' node in your Firebase database with each medicine having a 'price' field
+const medicinesRef = ref(database, 'medicine');
+const overallCostDisplay = document.getElementById('overallCostDisplay');
+
+// Function to calculate the overall cost with retry
+async function calculateOverallCostWithRetry(maxRetries = 100, delayBetweenRetries = 1000) {
+  let retries = 0;
+
+  async function attemptCalculation() {
+    try {
+      const snapshot = await get(medicinesRef);
+
+      if (snapshot.exists()) {
+        let overallCost = 0;
+
+        // Iterate through each medicine in the snapshot
+        snapshot.forEach((medicineSnapshot) => {
+          const medicineData = medicineSnapshot.val();
+
+          // Assuming each medicine has a 'price' and 'quantity' field
+          const pricePerPiece = medicineData.price || 0;
+          const quantity = medicineData.parents || 0;
+
+          // Calculate the cost for the current medicine
+          const medicineCost = pricePerPiece * quantity;
+
+          // Add the cost to the overall cost
+          overallCost += medicineCost;
+        });
+
+        // Format the overall cost
+        const formattedAmount = overallCost.toLocaleString('en');
+
+        // Display the overall cost in the div
+        overallCostDisplay.innerHTML = `<i class="fa fa-line-chart icon"></i> Overall Estimated Revenue: UGX ${formattedAmount}`;
+      } else {
+        overallCostDisplay.textContent = 'No medicines found in the database.';
+      }
+    } catch (error) {
+      console.error('Error calculating overall cost:', error.message);
+
+      // Retry if the maximum number of retries hasn't been reached
+      if (retries < maxRetries) {
+        retries++;
+        console.log(`Retrying (Attempt ${retries})...`);
+        setTimeout(attemptCalculation, delayBetweenRetries);
+      } else {
+        console.error('Max retries reached. Unable to fetch data.');
+      }
+    }
+  }
+
+  // Start the initial attempt
+  attemptCalculation();
+}
+
+// Call the function to calculate the overall cost with retry
+calculateOverallCostWithRetry();

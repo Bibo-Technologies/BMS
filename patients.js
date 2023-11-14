@@ -108,17 +108,14 @@ function isTokenValid() {
   return tokenExpiryTime > currentTime;
 }
 
-// Function to display the login overlay on page load based on token validity
 window.addEventListener('load', function() {
   retrieveTokenFromLocalStorage(); // Retrieve token from local storage
-  // Check if token is valid, if not, display login overlay
+  // Check if token is valid, if not, redirect to the login page
   if (!isTokenValid()) {
-    document.getElementById('loginoverlay').style.display = 'block';
-    document.getElementById('loginpopup').style.display = 'block';
-    generateToken(); // Generate a new token on login overlay display
-    console.log(authToken + tokenExpiryTime)
+    window.location.href = 'login.html'; // Replace 'login.html' with the URL of your login page
   }
 });
+
 
 // Rest of your code...
 
@@ -323,6 +320,16 @@ function retryCallback() {
 
 
 displayMessage('', 'Please wait...', false); // Pass false for error message
+// Add event listener to all links within the website
+document.addEventListener('click', function(event) {
+  const target = event.target;
+
+  // Check if the clicked element is a link within the website
+  if (target.tagName === 'A' && target.href.startsWith(window.location.origin)) {
+    // Store the clicked link's URL in local storage
+    localStorage.setItem('clickedLink', target.href);
+  }
+});
 
 // Get the "Log Out" button element
 const logoutButton = document.getElementById("logoutButton");
@@ -330,39 +337,40 @@ const logoutButton = document.getElementById("logoutButton");
 // Add event listener to the "Log Out" button
 logoutButton.addEventListener("click", function(event) {
   event.preventDefault();
-  logOut();
 
-  // Trigger the sign-in popup to appear again
-  var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider)
-    .then(function(result) {
-      // Handle sign-in success
-      var user = result.user;
-      console.log('User signed in:', user.email);
-    })
-    .catch(function(error) {
-      // Handle sign-in error
-      console.error('Error signing in:', error);
-    });
+  // Store the current page URL in local storage
+  localStorage.setItem('logoutPage', window.location.href);
+
+  // Store the clicked link's URL in local storage
+  const clickedLink = localStorage.getItem('clickedLink');
+  if (clickedLink) {
+    localStorage.setItem('logoutPage', clickedLink);
+  }
+
+  logOut();
 });
 
-// Update the logOut() function to reset the token and remove it from local storage
+// Function to log out
 function logOut() {
-  authToken = null;
-  tokenExpiryTime = null;
-  // Remove token and expiry time from local storage
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('tokenExpiryTime');
   auth.signOut()
     .then(function() {
-     // console.log('User signed out');
-      // Refresh the page
-      location.reload();
+      // Clear the login token and other stored values
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('tokenExpiryTime');
+      localStorage.removeItem('clickedLink');
+
+      // Redirect to the stored page URL (either clicked link or current page)
+      const logoutPage = localStorage.getItem('logoutPage') || 'login.html';
+      window.location.href = logoutPage;
     })
     .catch(function(error) {
       console.error('Error signing out:', error);
     });
 }
+
+
+
+
 /*const medicationTakenSelect = document.getElementById('medicationTaken');
 
 // Retrieve medicines from Firebase and populate the select options

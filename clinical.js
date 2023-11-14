@@ -48,17 +48,14 @@ function isTokenValid() {
   return tokenExpiryTime > currentTime;
 }
 
-// Function to display the login overlay on page load based on token validity
 window.addEventListener('load', function() {
   retrieveTokenFromLocalStorage(); // Retrieve token from local storage
-  // Check if token is valid, if not, display login overlay
+  // Check if token is valid, if not, redirect to the login page
   if (!isTokenValid()) {
-    document.getElementById('loginoverlay').style.display = 'block';
-    document.getElementById('loginpopup').style.display = 'block';
-    generateToken(); // Generate a new token on login overlay display
-    console.log(authToken + tokenExpiryTime)
+    window.location.href = 'login.html'; // Replace 'login.html' with the URL of your login page
   }
 });
+
 
 // Rest of your code...
 
@@ -269,40 +266,9 @@ function retryCallback() {
 
 displayMessage('Signing in...', 'Please wait...', false); // Pass false for error message
 
-// Get the "Log Out" button element
-const logoutButton = document.getElementById("logoutButton");
 
-// Add event listener to the "Log Out" button
-logoutButton.addEventListener("click", function(event) {
-  event.preventDefault();
-  logOut();
 
-  // Trigger the sign-in popup to appear again
-  var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider)
-    .then(function(result) {
-      // Handle sign-in success
-      var user = result.user;
-      console.log('User signed in:', user.displayName);
-    })
-    .catch(function(error) {
-      // Handle sign-in error
-      console.error('Error signing in:', error);
-    });
-});
 
-// Function to log out
-function logOut() {
-  auth.signOut()
-    .then(function() {
-      console.log('User signed out');
-      // Refresh the page
-      location.reload();
-    })
-    .catch(function(error) {
-      console.error('Error signing out:', error);
-    });
-}
 const medicationTakenSelect = document.getElementById('medicationTaken');
 
 // Retrieve medicines from Firebase and populate the select options

@@ -6441,6 +6441,8 @@ margin-top: 30px;
   }
 
   .survey-item {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+
     margin: auto;
     background-color: #FFFFFF;
     display: flex;
@@ -6449,11 +6451,11 @@ margin-top: 30px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 15px;
+    border-radius: 20px;
   }
 
   .survey-item i {
-    font-size: 40px;
+    font-size: 30px;
     margin-bottom: 10px;
   }
   .survey-item p {
@@ -6461,7 +6463,7 @@ margin-top: 30px;
   }
  
   .survey-item span {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 900;
   }
 
@@ -9865,8 +9867,8 @@ color: black;
   border:transparent;
   padding: 10px;
   background: #076585; /* fallback for old browsers */
-  background: -webkit-linear-gradient(to left, #fff, #076585); /* Chrome 10-25, Safari 5.1-6 */
-  background: linear-gradient(to left, #fff, #076585); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: -webkit-linear-gradient(to left, #fff 30%, #076585); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to left, #fff 30%, #076585); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
              }
 
 /* Additional style to overlay the image with a semi-transparent layer */
@@ -10005,4 +10007,15 @@ width: fit-content;
 
 #sendMessageBtn i {
   font-size: 20px;
+}
+#overallCostDisplay {
+  font-size: 20px;
+  color: #4CAF50; /* Green color */
+  background-color: #f2f2f2; /* Light gray background */
+  padding: 10px;
+  margin-top: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Box shadow for a subtle effect */
+  width: fit-content;
+  float: right;
 }
