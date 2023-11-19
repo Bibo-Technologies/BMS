@@ -4,7 +4,7 @@
     "description": "Bibo Medical Systems is a state-of-the-art Hospital Management System that aims to revolutionize healthcare services",
     "icons": [
       {
-        "src": "./BMS.png",
+        "src": "BMS.png",
         "sizes": "200x200",
         "type": "image/png"
       }

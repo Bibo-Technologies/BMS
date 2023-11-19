@@ -333,6 +333,7 @@ document.addEventListener('click', function(event) {
 
 // Get the "Log Out" button element
 const logoutButton = document.getElementById("logoutButton");
+const overlay = document.getElementById("overlay");
 
 // Add event listener to the "Log Out" button
 logoutButton.addEventListener("click", function(event) {
@@ -347,8 +348,46 @@ logoutButton.addEventListener("click", function(event) {
     localStorage.setItem('logoutPage', clickedLink);
   }
 
-  logOut();
+  // Display overlay with spinner and text
+  displayOverlay();
+
+  // Simulate logout delay (you can replace this with your actual logout logic)
+  setTimeout(() => {
+    // Perform logout
+    logOut();
+
+    // Hide overlay after logout is complete
+    hideOverlay();
+  }, 2000);
 });
+
+function displayOverlay() {
+  // Create spinner element
+  const spinner = document.createElement('div');
+  spinner.id = 'loadingSpinner';
+  overlay.appendChild(spinner);
+
+  // Create "Logging Out" text element
+  const loggingOutText = document.createElement('div');
+  loggingOutText.id = 'loggingOutText';
+  loggingOutText.textContent = 'Logging Out...';
+  overlay.appendChild(loggingOutText);
+
+  // Display overlay
+  overlay.style.display = 'flex';
+}
+
+function hideOverlay() {
+  // Remove spinner and text elements from overlay
+  const spinner = document.getElementById('loadingSpinner');
+  const loggingOutText = document.getElementById('loggingOutText');
+  overlay.removeChild(spinner);
+  overlay.removeChild(loggingOutText);
+
+  // Hide overlay
+  overlay.style.display = 'none';
+}
+
 
 // Function to log out
 function logOut() {
@@ -1344,6 +1383,7 @@ function openEditPopup(patientId) {
   editPopup.style.display = 'block';
   editPopupOverlay.style.visibility = 'visible';
   editPopupOverlay.style.opacity = '1';
+  overlay.style.display = 'block'
 // Add the event listener for saving edited details
 saveEditedDetailsHandler = saveEditedDetails;
 
@@ -1368,7 +1408,7 @@ function closeEditPopup() {
   editPopup.style.display = 'none';
   editPopupOverlay.style.visibility = 'hidden';
   editPopupOverlay.style.opacity = '0';
-
+  overlay.style.display = 'none';
   // Remove the event listener for saving edited details
   saveEditedDetailsButton.removeEventListener('click', saveEditedDetailsHandler);
 
@@ -1506,20 +1546,26 @@ const saveVisitButton = document.getElementById('saveVisitBtn');
 const visitButton = document.getElementById('visit');
 const visitPopupOverlay = document.getElementById('popup-overlay3');
 const visitPopupTitle = document.getElementById('visitPopupTitle');
-let currentPatientName = ''; // Declare a variable to store the current patient name
 
 visitButton.addEventListener('click', (event) => {
   // Check if the popup is already open before opening it again
   if (!isPopupOpen) {
-    currentPatientName = event.target.getAttribute('data-patient'); // Extract the patient's name from the data-patient attribute
-    visitPopupTitle.textContent = `Save Visit for Patient: PI - ${currentPatientName}`; // Set the popup title
-    visitPopupOverlay.style.display = 'block';
-    // Update the isPopupOpen variable to true when the popup is opened
-    isPopupOpen = true;
+    // Extract the patient's ID from the data-patient attribute
+    currentPatientId = event.currentTarget.getAttribute('data-patient');
 
-    // Remove any existing event listeners from "Save Visit" button and add the click event listener
-    saveVisitButton.removeEventListener('click', handleSaveVisit);
-    saveVisitButton.addEventListener('click', handleSaveVisit);
+    // Check if the patient ID is available
+    if (currentPatientId) {
+      visitPopupTitle.textContent = `Save Visit for Patient: PI - ${currentPatientId}`; // Set the popup title
+      visitPopupOverlay.style.display = 'block';
+      // Update the isPopupOpen variable to true when the popup is opened
+      isPopupOpen = true;
+
+      // Remove any existing event listeners from "Save Visit" button and add the click event listener
+      saveVisitButton.removeEventListener('click', handleSaveVisit);
+      saveVisitButton.addEventListener('click', () => handleSaveVisit(currentPatientId));
+    } else {
+      alert('Patient ID is null or undefined. Please try again');
+    }
   }
 });
 

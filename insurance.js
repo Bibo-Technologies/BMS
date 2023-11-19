@@ -280,6 +280,7 @@ document.addEventListener('click', function(event) {
 
 // Get the "Log Out" button element
 const logoutButton = document.getElementById("logoutButton");
+const overlay = document.getElementById("overlay");
 
 // Add event listener to the "Log Out" button
 logoutButton.addEventListener("click", function(event) {
@@ -294,8 +295,46 @@ logoutButton.addEventListener("click", function(event) {
     localStorage.setItem('logoutPage', clickedLink);
   }
 
-  logOut();
+  // Display overlay with spinner and text
+  displayOverlay();
+
+  // Simulate logout delay (you can replace this with your actual logout logic)
+  setTimeout(() => {
+    // Perform logout
+    logOut();
+
+    // Hide overlay after logout is complete
+    hideOverlay();
+  }, 2000);
 });
+
+function displayOverlay() {
+  // Create spinner element
+  const spinner = document.createElement('div');
+  spinner.id = 'loadingSpinner';
+  overlay.appendChild(spinner);
+
+  // Create "Logging Out" text element
+  const loggingOutText = document.createElement('div');
+  loggingOutText.id = 'loggingOutText';
+  loggingOutText.textContent = 'Logging Out...';
+  overlay.appendChild(loggingOutText);
+
+  // Display overlay
+  overlay.style.display = 'flex';
+}
+
+function hideOverlay() {
+  // Remove spinner and text elements from overlay
+  const spinner = document.getElementById('loadingSpinner');
+  const loggingOutText = document.getElementById('loggingOutText');
+  overlay.removeChild(spinner);
+  overlay.removeChild(loggingOutText);
+
+  // Hide overlay
+  overlay.style.display = 'none';
+}
+
 
 // Function to log out
 function logOut() {
