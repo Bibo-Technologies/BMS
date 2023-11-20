@@ -1793,47 +1793,69 @@ saveButton.addEventListener('click', function () {
   const imageElement = imageFrame.querySelector('img');
   const imageData = imageElement.src;
 
-  // Get the patient name
-  const patientName = patient.patientId;
+  // Convert the image to WebP format
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  const img = new Image();
 
-  // Generate a unique filename for the image using the patient's name
-  const filename = `${patientName}_${Date.now()}.jpg`;
+  img.onload = function () {
+    // Set canvas dimensions to the image dimensions
+    canvas.width = img.width;
+    canvas.height = img.height;
 
-  // Save the image data to Firebase Storage under the patient's name
-  const imageRef = storageRef(storage, `images/${filename}`);
-  const imageBlob = dataURItoBlob(imageData);
+    // Draw the image onto the canvas
+    context.drawImage(img, 0, 0, img.width, img.height);
 
-  // Upload the image blob to Firebase Storage
-  const uploadTask = uploadBytes(imageRef, imageBlob);
+    // Convert the canvas content to a WebP data URL
+    const webpDataURL = canvas.toDataURL('image/webp', 0.8); // Adjust quality as needed
 
-  // Monitor the upload completion using the then method
-  uploadTask
-    .then(function () {
-      // The image has been successfully uploaded
-      // Get the download URL of the image
-      getDownloadURL(imageRef)
-        .then(function (downloadURL) {
-          // Save the download URL to the patient's data in Firebase
-          const patientRef = ref(database, `patients/${patient.patientId}`);
-          update(patientRef, {
-            image: downloadURL,
+    // Convert the WebP data URL to a Blob
+    const imageBlob = dataURItoBlob(webpDataURL);
+
+    // Get the patient name
+    const patientName = patient.patientId;
+
+    // Generate a unique filename for the image using the patient's name
+    const filename = `${patientName}_${Date.now()}.webp`;
+
+    // Save the image data to Firebase Storage under the patient's name
+    const imageRef = storageRef(storage, `images/${filename}`);
+
+    // Upload the image blob to Firebase Storage
+    const uploadTask = uploadBytes(imageRef, imageBlob);
+
+    // Monitor the upload completion using the then method
+    uploadTask
+      .then(function () {
+        // The image has been successfully uploaded
+        // Get the download URL of the image
+        getDownloadURL(imageRef)
+          .then(function (downloadURL) {
+            // Save the download URL to the patient's data in Firebase
+            const patientRef = ref(database, `patients/${patient.patientId}`);
+            update(patientRef, {
+              image: downloadURL,
+            });
+
+            // Show success message or perform any additional actions
+            showMessage('Image saved successfully!');
+          })
+          .finally(() => {
+            // Revert back to the original button text after the save is complete or fails
+            saveButton.textContent = 'Save Image';
           });
+      })
+      .catch(function (error) {
+        // Handle the upload error
+        console.error('Error uploading image:', error);
+        showMessage('Error uploading image. Please try again.');
+        // Revert back to the original button text if there's an error
+        saveButton.textContent = 'Save';
+      });
+  };
 
-          // Show success message or perform any additional actions
-          showMessage('Image saved successfully!');
-        })
-        .finally(() => {
-          // Revert back to the original button text after the save is complete or fails
-          saveButton.textContent = 'Save Image';
-        });
-    })
-    .catch(function (error) {
-      // Handle the upload error
-      console.error('Error uploading image:', error);
-      showMessage('Error uploading image. Please try again.');
-      // Revert back to the original button text if there's an error
-      saveButton.textContent = 'Save';
-    });
+  // Set the source of the image element
+  img.src = imageData;
 });
 
 const deleteButton = document.getElementById('delButton')
