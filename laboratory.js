@@ -2523,32 +2523,48 @@ function deleteRecord(recordKey) {
 }
 
 }
-
-// Get the lab requests popup elements
 const labRequestsPopupOverlay = document.getElementById('labRequestsPopupOverlay');
-// Variable to store the latest lab request message
-let latestLabRequestMessage = null;
+let latestLabRequestMessage = '';
+const shownMessages = new Set(); // Set to keep track of shown messages
 
-// Function to display a browser notification
-function showNotification(message) {
-  if (Notification.permission === 'granted') {
-    const notification = new Notification('New Lab Request', {
-      body: message,
-    });
+// Function to display a custom notification message and play a sound
+function showRequestMessage(message) {
+  const notificationContainer = document.createElement('div');
+  notificationContainer.className = 'request-notification'; // Add a class for styling
+  notificationContainer.textContent = message;
 
-    // Close the notification after a few seconds
-    setTimeout(notification.close.bind(notification), 9000);
-  } else if (Notification.permission !== 'denied') {
-    // Request permission to display notifications
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        showNotification(message);
-      }
-    });
+  // Append the notification to the body
+  document.body.appendChild(notificationContainer);
+
+  // Remove the notification after a few seconds
+  setTimeout(() => {
+    notificationContainer.remove();
+  }, 9000); // Adjust the duration as needed
+}
+
+// Function to play a sound without displaying a message
+function playNotificationSound() {
+  // Play a sound (you can replace 'notification.mp3' with your desired sound file)
+  const audio = new Audio('new-notification-on-your-device-138695.mp3');
+  audio.play();
+}
+
+// Function to display a browser notification and play a sound
+function showNotification(message, timestamp) {
+  if (!shownMessages.has(timestamp)) {
+    // Play the notification sound
+    playNotificationSound();
+
+    // Add the timestamp to the set of shown messages
+    shownMessages.add(timestamp);
   }
 }
 
- // Function to retrieve and display lab requests from Firebase
+
+// Array to cache lab requests
+const labRequestsCache = [];
+
+// Function to retrieve and display lab requests from Firebase
 function retrieveAndDisplayLabRequests() {
   const labRequestsList = document.getElementById('labRequestsList');
   labRequestsList.innerHTML = ''; // Clear previous lab requests
@@ -2560,49 +2576,58 @@ function retrieveAndDisplayLabRequests() {
         let notDoneCount = 0;
 
         // Add event listeners to the filter buttons
-const notDoneBtn = document.getElementById('notDoneBtn');
-const completedBtn = document.getElementById('completedBtn');
+        const notDoneBtn = document.getElementById('notDoneBtn');
+        const completedBtn = document.getElementById('completedBtn');
 
-notDoneBtn.addEventListener('click', () => {
-  applyFilter('Not Yet Done');
-});
+        notDoneBtn.addEventListener('click', () => {
+          applyFilter('Not Yet Done');
+        });
 
-completedBtn.addEventListener('click', () => {
-  applyFilter('Completed');
-});
+        completedBtn.addEventListener('click', () => {
+          applyFilter('Completed');
+        });
 
-// Function to apply the filter
-function applyFilter(filter) {
-  const labRequestsList = document.getElementById('labRequestsList');
-  const labRequestItems = labRequestsList.querySelectorAll('li');
+        // Function to apply the filter
+        function applyFilter(filter) {
+          const labRequestsList = document.getElementById('labRequestsList');
+          const labRequestItems = labRequestsList.querySelectorAll('li');
 
-  labRequestItems.forEach((item) => {
-    const status = item.getAttribute('data-status');
-    if (status === filter || filter === 'All') {
-      item.style.display = 'block';
-    } else {
-      item.style.display = 'none';
-    }
-  });
+          labRequestItems.forEach((item) => {
+            const status = item.getAttribute('data-status');
+            if (status === filter || filter === 'All') {
+              item.style.display = 'block';
+            } else {
+              item.style.display = 'none';
+            }
+          });
 
-  // Update the active filter button
-  const filterButtons = document.querySelectorAll('.filter-button');
-  filterButtons.forEach((button) => {
-    if (button.textContent === filter) {
-      button.classList.add('active');
-    } else {
-      button.classList.remove('active');
-    }
-  });
-}
+          // Update the active filter button
+          const filterButtons = document.querySelectorAll('.filter-button');
+          filterButtons.forEach((button) => {
+            if (button.textContent === filter) {
+              button.classList.add('active');
+            } else {
+              button.classList.remove('active');
+            }
+          });
+        }
+
         snapshot.forEach((childSnapshot) => {
-          const messageId = childSnapshot.key;
+          const messageId = childSnapshot.key; // Use the message key as the identifier
+
+          // Check if the message is already in the cache
+          if (!labRequestsCache.includes(messageId)) {
+            labRequestsCache.push(messageId); // Add the message key to the cache
+
+            // Show a notification for the latest message
+            showNotification(childSnapshot.val().message, messageId);
+          }
+
           const labRequest = childSnapshot.val().message;
           const status = childSnapshot.val().status || 'Not Yet Done';
-          const timestamp = childSnapshot.val().timestamp || '';
           const listItem = document.createElement('li');
-  listItem.id = messageId; // Set the ID to the message ID
-  listItem.setAttribute('data-status', status); // Set the "data-status" attribute
+          listItem.id = messageId; // Set the ID to the message ID
+          listItem.setAttribute('data-status', status); // Set the "data-status" attribute
 
           // Create the message content with "Mark as Done" button
           const messageContent = document.createElement('span');
@@ -2610,41 +2635,33 @@ function applyFilter(filter) {
           listItem.appendChild(messageContent);
 
           // Create the "Mark as Done" button
-        // Inside the retrieveAndDisplayLabRequests function, where you create the "Done" button
- const messageStatus = document.createElement('span');
-           messageStatus.textContent = status + (timestamp ? ' - ' + formatDate(timestamp) : '');
-           messageStatus.classList.add('time-status'); // Add the CSS class to the span element
-           listItem.appendChild(messageStatus);
+          const messageStatus = document.createElement('span');
+          messageStatus.textContent = status;
+          messageStatus.classList.add('time-status'); // Add the CSS class to the span element
+          listItem.appendChild(messageStatus);
 
+          // Create the "Done" button
+          const markAsDoneBtn = document.createElement('button');
+          markAsDoneBtn.textContent = 'Done';
+          markAsDoneBtn.classList.add('button-done'); // Add the CSS class to the button
+          markAsDoneBtn.addEventListener('click', () => {
+            markMessageAsDone(messageId);
+          });
+          listItem.appendChild(markAsDoneBtn);
 
-           // Create the "Done" button
-           const markAsDoneBtn = document.createElement('button');
-           markAsDoneBtn.textContent = 'Done';
-           markAsDoneBtn.classList.add('button-done'); // Add the CSS class to the button
-           markAsDoneBtn.addEventListener('click', () => {
-             markMessageAsDone(messageId);
-           });
-           listItem.appendChild(markAsDoneBtn);
-
-
-          
           // Append the list item to the lab requests list
           labRequestsList.appendChild(listItem);
 
           if (status === 'Not Yet Done') {
             notDoneCount++;
             messageStatus.style.color = 'red';
-          // Update the latest lab request message
-          latestLabRequestMessage = labRequest;
-          }
-          else if (status === 'Completed') {
+            // Update the latest lab request message
+            latestLabRequestMessage = labRequest;
+          } else if (status === 'Completed') {
             markAsDoneBtn.style.display = 'none';
           }
         });
-  // Show a notification for the latest message (if there is any latest message)
-  if (latestLabRequestMessage) {
-    showNotification(latestLabRequestMessage);
-  }
+
         // Display the count of not yet done messages
         const notDoneCountSpan = document.getElementById('notDoneCount');
         notDoneCountSpan.textContent = notDoneCount;
@@ -2708,6 +2725,9 @@ function openLabRequestsPopup() {
 function closeLabRequestsPopup() {
   const labRequestsPopupOverlay = document.getElementById('labRequestsPopupOverlay');
   labRequestsPopupOverlay.style.display = 'none';
+  const labRequestsList = document.getElementById('labRequestsList');
+  labRequestsList.innerHTML = ''; // Clear previous lab requests
+
 }
 
 // Attach click event to the close button to close the lab requests popup
@@ -3230,10 +3250,10 @@ const messageInput = document.getElementById('messageInput');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 
 // Audio for message sent
-const messageSentAudio = new Audio('interface-124464.mp3');
+const messageSentAudio = new Audio('COMCell_Message sent (ID 1313)_BSB.mp3');
 
 // Audio for new message received
-const newMessageAudio = new Audio('interface-124464.mp3');
+const newMessageAudio = new Audio('livechat-129007.mp3');
 
 // Array to store IDs of displayed messages
 let displayedMessageIds = [];

@@ -5367,7 +5367,7 @@ ul.notifications {
 }
 #editPopup{
   display: none;
-  z-index: 9999;
+  z-index: 10000;
   width: 60%;
   position: fixed;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
@@ -6429,12 +6429,32 @@ margin-top: 30px;
     padding: 20px;
     border-radius: 8px;
     margin-top: 10px;
-    background: #136a8a;  /* fallback for old browsers */
-    background: -webkit-linear-gradient(to right, #267871, #136a8a);  /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(to right, #267871, #136a8a); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-
+   
   }
+  section {
+    background: linear-gradient(270deg, #0a7102, #0038a2);
+    background-size: 400% 400%;
 
+    -webkit-animation: AnimationName 33s ease infinite;
+    -moz-animation: AnimationName 33s ease infinite;
+    animation: AnimationName 33s ease infinite;
+}
+
+@-webkit-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
   h2 {
     font-size: 24px;
     margin-bottom: 10px;
@@ -9299,8 +9319,9 @@ float: right;
 /* Style for the patient demographics table */
 .patient-demographics-table {
   border-collapse: collapse;
-  width: 55%;
+  width: 50%;
   margin-top: 10px;
+  margin-bottom: 10px;
   background-color: #ccc;
 }
 
@@ -10055,3 +10076,28 @@ width: fit-content;
   margin-left: 10px;
 
 }
+.request-notification {
+  position: fixed;
+  top: 0;
+  left: -100%; /* Start off-screen to the left */
+  background-color: #4CAF50; /* Green background color */
+       color: white; /* White text color */
+  padding: 15px; /* Padding */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Box shadow for a subtle effect */
+  z-index: 999; /* Ensure it's on top of other elements */
+  font-size: 16px; /* Font size */
+  font-weight: bold; /* Bold text */
+  animation: slideInLeft 0.7s ease-in-out forwards; /* Add a slide-in animation */
+}
+
+@keyframes slideInLeft {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+

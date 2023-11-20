@@ -1245,6 +1245,10 @@ function openPatientHistoryPopup(patient) {
       <td>${patient.patientId}</td>
     </tr>
     <tr>
+    <td><strong>No. of Visits:</strong></td>
+    <td id="visitCount"> </td>
+  </tr>
+    <tr>
       <td><strong>Current Patient's Status:</strong></td>
       <td><span id="currentStatus"></span></td>
     </tr>
@@ -1252,7 +1256,6 @@ function openPatientHistoryPopup(patient) {
     <div id="barcode"></div> <!-- This is where the generated barcode will be displayed -->
 
     <!-- Add a "Visit Count" element in your HTML -->
-    <p style="text-decoration: underline;"><strong>No. of visits:</strong>  <span id="visitCount"></span></p>
     <!-- Add more patient details as needed -->
 
     <!-- The container for patient visit details -->
@@ -1537,6 +1540,31 @@ function handleSaveVisit() {
   });
 } else {
 showMessage('Invalid patient data.');
+
+// Reset the patient name and close the popup
+currentPatientName = ''; // Ensure you reset it when the visit is saved
+visitPopupTitle.textContent = ''; // Clear the patient name from the popup title
+visitPopupOverlay.style.display = 'none'; // Hide the popup
+isPopupOpen = false; // Update the isPopupOpen variable
+
+// Reset the form fields after saving the visit
+clinicianNameSelect.value = '';
+document.getElementById('temperature').value = '';
+document.getElementById('bp').value = '';
+document.getElementById('rr').value = '';
+document.getElementById('hr').value = '';
+document.getElementById('sp02').value = '';
+document.getElementById('wt').value = '';
+document.getElementById('ht').value = '';
+document.getElementById('bmi').value = '';
+document.getElementById('muac').value = '';
+document.getElementById('weightForAgeZScore').value = '';
+document.getElementById('disability').value = '';
+document.getElementById('chronicIllness').value = '';
+document.getElementById('drugAbuse').value = '';
+$('#allergies').val(null).trigger('change'); // Reset the Select2 multiple select
+// Remove the event listener to avoid duplicates
+saveVisitButton.removeEventListener('click', handleSaveVisit);
 }
 }
 // Get the "Save Visit" button element
@@ -1546,26 +1574,20 @@ const saveVisitButton = document.getElementById('saveVisitBtn');
 const visitButton = document.getElementById('visit');
 const visitPopupOverlay = document.getElementById('popup-overlay3');
 const visitPopupTitle = document.getElementById('visitPopupTitle');
+let currentPatientName = ''; // Declare a variable to store the current patient name
 
 visitButton.addEventListener('click', (event) => {
   // Check if the popup is already open before opening it again
   if (!isPopupOpen) {
-    // Extract the patient's ID from the data-patient attribute
-    currentPatientId = event.currentTarget.getAttribute('data-patient');
+    currentPatientName = event.target.getAttribute('data-patient'); // Extract the patient's name from the data-patient attribute
+    visitPopupTitle.textContent = `Save Visit for Patient: PI - ${currentPatientName}`; // Set the popup title
+    visitPopupOverlay.style.display = 'block';
+    // Update the isPopupOpen variable to true when the popup is opened
+    isPopupOpen = true;
 
-    // Check if the patient ID is available
-    if (currentPatientId) {
-      visitPopupTitle.textContent = `Save Visit for Patient: PI - ${currentPatientId}`; // Set the popup title
-      visitPopupOverlay.style.display = 'block';
-      // Update the isPopupOpen variable to true when the popup is opened
-      isPopupOpen = true;
-
-      // Remove any existing event listeners from "Save Visit" button and add the click event listener
-      saveVisitButton.removeEventListener('click', handleSaveVisit);
-      saveVisitButton.addEventListener('click', () => handleSaveVisit(currentPatientId));
-    } else {
-      alert('Patient ID is null or undefined. Please try again');
-    }
+    // Remove any existing event listeners from "Save Visit" button and add the click event listener
+    saveVisitButton.removeEventListener('click', handleSaveVisit);
+    saveVisitButton.addEventListener('click', handleSaveVisit);
   }
 });
 
@@ -3880,6 +3902,29 @@ const labRequestsPopupOverlay = document.getElementById('listPopupOverlay');
 // Variable to store the latest lab request message
 let latestLabRequestMessage = null;
 
+const labResultShownMessages = new Set(); // Set to keep track of shown lab result messages
+
+// Function to play a lab result notification sound without displaying a message
+function playLabResultNotificationSound() {
+  // Play a sound (replace 'lab-notification.mp3' with your desired sound file)
+  const audio = new Audio('simple-notification-152054.mp3');
+  audio.play();
+}
+
+// Function to display a lab result browser notification and play a sound
+function showLabResultNotification(message, messageId) {
+  if (!labResultShownMessages.has(messageId)) {
+    // Play the lab result notification sound
+    playLabResultNotificationSound();
+
+    // Add the message ID to the set of shown lab result messages
+    labResultShownMessages.add(messageId);
+  }
+}
+
+// Array to cache lab result messages
+const labResultMessagesCache = [];
+
 // Function to retrieve and display lab requests from Firebase
 function retrieveAndDisplayLabRequests() {
   const labRequestsList = document.getElementById('labRequestsList');
@@ -3931,6 +3976,15 @@ function retrieveAndDisplayLabRequests() {
 
         snapshot.forEach((childSnapshot) => {
           const messageId = childSnapshot.key;
+
+          // Check if the lab result message is already in the cache
+          if (!labResultMessagesCache.includes(messageId)) {
+            labResultMessagesCache.push(messageId); // Add the lab result message key to the cache
+
+            // Show a notification for the latest lab result message
+            showLabResultNotification(childSnapshot.val().message, messageId);
+          }
+
           const labRequest = childSnapshot.val().message;
           const status = childSnapshot.val().status || 'Not Yet Done';
           const timestamp = childSnapshot.val().timestamp || '';
@@ -3978,7 +4032,7 @@ function retrieveAndDisplayLabRequests() {
 
         // Show a notification for the latest message (if there is any latest message)
         if (latestLabRequestMessage) {
-          showNotification(latestLabRequestMessage);
+          showLabResultNotification(latestLabRequestMessage);
         }
 
         // Display the count of not yet done messages
@@ -3986,16 +4040,15 @@ function retrieveAndDisplayLabRequests() {
         notDoneCountSpan.textContent = notDoneCount;
       } else {
         const noLabRequestsItem = document.createElement('li');
-        noLabRequestsItem.textContent = 'No lab requests found.';
+        noLabRequestsItem.textContent = 'No lab results found.';
         labRequestsList.appendChild(noLabRequestsItem);
       }
     } catch (error) {
-      console.error('Error retrieving lab requests:', error);
-      showMessage('Error retrieving lab requests:', error);
+      console.error('Error retrieving lab results:', error);
+      showMessage('Error retrieving lab results:', error);
     }
   });
 }
-
 
 // Attach click event to the envelope icon to open the lab requests popup
 const envelopeIcon = document.getElementById('envelope-icon');
@@ -4436,10 +4489,10 @@ const messageInput = document.getElementById('messageInput');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 
 // Audio for message sent
-const messageSentAudio = new Audio('interface-124464.mp3');
+const messageSentAudio = new Audio('COMCell_Message sent (ID 1313)_BSB.mp3');
 
 // Audio for new message received
-const newMessageAudio = new Audio('interface-124464.mp3');
+const newMessageAudio = new Audio('livechat-129007.mp3');
 
 // Array to store IDs of displayed messages
 let displayedMessageIds = [];

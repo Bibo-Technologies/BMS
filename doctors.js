@@ -3105,27 +3105,47 @@ function formatDate(timestamp) {
 const listPopupOverlay = document.getElementById('listPopupOverlay');
 // Variable to store the latest lab request message
 let listMessage = null;
+const shownMessages = new Set(); // Set to keep track of shown messages
 
-// Function to display a browser notification
-function showNotification(message) {
-  if (Notification.permission === 'granted') {
-    const notification = new Notification('New waiting Request', {
-      body: message,
-    });
+// Function to display a custom notification message and play a sound
+function showRequestMessage(message) {
+  const notificationContainer = document.createElement('div');
+  notificationContainer.className = 'request-notification'; // Add a class for styling
+  notificationContainer.textContent = message;
 
-    // Close the notification after a few seconds
-    setTimeout(notification.close.bind(notification), 9000);
-  } else if (Notification.permission !== 'denied') {
-    // Request permission to display notifications
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        showNotification(message);
-      }
-    });
+  // Append the notification to the body
+  document.body.appendChild(notificationContainer);
+
+  // Remove the notification after a few seconds
+  setTimeout(() => {
+    notificationContainer.remove();
+  }, 9000); // Adjust the duration as needed
+}
+
+// Function to play a sound without displaying a message
+function playNotificationSound() {
+  // Play a sound (you can replace 'notification.mp3' with your desired sound file)
+  const audio = new Audio('new-notification-on-your-device-138695.mp3');
+  audio.play();
+}
+
+// Function to display a browser notification and play a sound
+function showNotification(message, timestamp) {
+  if (!shownMessages.has(timestamp)) {
+    // Play the notification sound
+    playNotificationSound();
+
+    // Add the timestamp to the set of shown messages
+    shownMessages.add(timestamp);
   }
 }
 
- // Function to retrieve and display lab requests from Firebase
+
+
+// Array to cache patient messages
+const patientMessagesCache = [];
+
+// Function to retrieve and display lab requests from Firebase
 function retrieveAndDisplaylist() {
   const waitinglist = document.getElementById('waitinglist');
   waitinglist.innerHTML = ''; // Clear previous lab requests
@@ -3176,6 +3196,15 @@ function retrieveAndDisplaylist() {
         const messages = [];
         snapshot.forEach((childSnapshot) => {
           const messageId = childSnapshot.key;
+
+          // Check if the patient message is already in the cache
+          if (!patientMessagesCache.includes(messageId)) {
+            patientMessagesCache.push(messageId); // Add the patient message key to the cache
+
+            // Show a notification for the latest patient message
+            showNotification(childSnapshot.val().name, messageId);
+          }
+
           const patient = childSnapshot.val().name;
           const status = childSnapshot.val().status || 'Not Yet Done';
           const timestamp = childSnapshot.val().date || '';
@@ -3209,8 +3238,6 @@ function retrieveAndDisplaylist() {
           if (status === 'Not Yet Done') {
             listCount++;
             messageStatus.style.color = 'red';
-            // Update the latest lab request message
-            listMessage = name;
           } else if (status === 'Completed') {
             markAsDoneBtn2.style.display = 'none';
           }
@@ -3221,25 +3248,21 @@ function retrieveAndDisplaylist() {
           waitinglist.appendChild(message);
         });
 
-        // Show a notification for the latest message (if there is any latest message)
-        if (listMessage) {
-          showNotification(listMessage);
-        }
-
         // Display the count of not yet done messages
         const listCountSpan = document.getElementById('listCount');
         listCountSpan.textContent = listCount;
       } else {
         const listItem = document.createElement('li');
-        listItem.textContent = 'No lab requests found.';
+        listItem.textContent = 'No one is waiting.';
         waitinglist.appendChild(listItem);
       }
     } catch (error) {
-      console.error('Error retrieving lab requests:', error);
-      showMessage('Error retrieving lab requests:', error);
+      console.error('Error retrieving waiting list:', error);
+      showMessage('Error retrieving waiting list:', error);
     }
   });
 }
+
 
 
 // Attach click event to the envelope icon to open the lab requests popup
@@ -3334,6 +3357,28 @@ addRecordPopupClose.addEventListener('click', () => {
 const labRequestsPopupOverlay = document.getElementById('listPopupOverlay');
 // Variable to store the latest lab request message
 let latestLabRequestMessage = null;
+const labResultShownMessages = new Set(); // Set to keep track of shown lab result messages
+
+// Function to play a lab result notification sound without displaying a message
+function playLabResultNotificationSound() {
+  // Play a sound (replace 'lab-notification.mp3' with your desired sound file)
+  const audio = new Audio('simple-notification-152054.mp3');
+  audio.play();
+}
+
+// Function to display a lab result browser notification and play a sound
+function showLabResultNotification(message, messageId) {
+  if (!labResultShownMessages.has(messageId)) {
+    // Play the lab result notification sound
+    playLabResultNotificationSound();
+
+    // Add the message ID to the set of shown lab result messages
+    labResultShownMessages.add(messageId);
+  }
+}
+
+// Array to cache lab result messages
+const labResultMessagesCache = [];
 
 // Function to retrieve and display lab requests from Firebase
 function retrieveAndDisplayLabRequests() {
@@ -3386,6 +3431,15 @@ function retrieveAndDisplayLabRequests() {
 
         snapshot.forEach((childSnapshot) => {
           const messageId = childSnapshot.key;
+
+          // Check if the lab result message is already in the cache
+          if (!labResultMessagesCache.includes(messageId)) {
+            labResultMessagesCache.push(messageId); // Add the lab result message key to the cache
+
+            // Show a notification for the latest lab result message
+            showLabResultNotification(childSnapshot.val().message, messageId);
+          }
+
           const labRequest = childSnapshot.val().message;
           const status = childSnapshot.val().status || 'Not Yet Done';
           const timestamp = childSnapshot.val().timestamp || '';
@@ -3433,7 +3487,7 @@ function retrieveAndDisplayLabRequests() {
 
         // Show a notification for the latest message (if there is any latest message)
         if (latestLabRequestMessage) {
-          showNotification(latestLabRequestMessage);
+          showLabResultNotification(latestLabRequestMessage);
         }
 
         // Display the count of not yet done messages
@@ -3441,12 +3495,12 @@ function retrieveAndDisplayLabRequests() {
         notDoneCountSpan.textContent = notDoneCount;
       } else {
         const noLabRequestsItem = document.createElement('li');
-        noLabRequestsItem.textContent = 'No lab requests found.';
+        noLabRequestsItem.textContent = 'No lab results found.';
         labRequestsList.appendChild(noLabRequestsItem);
       }
     } catch (error) {
-      console.error('Error retrieving lab requests:', error);
-      showMessage('Error retrieving lab requests:', error);
+      console.error('Error retrieving lab results:', error);
+      showMessage('Error retrieving lab results:', error);
     }
   });
 }
@@ -3644,10 +3698,10 @@ const messageInput = document.getElementById('messageInput');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 
 // Audio for message sent
-const messageSentAudio = new Audio('interface-124464.mp3');
+const messageSentAudio = new Audio('COMCell_Message sent (ID 1313)_BSB.mp3');
 
 // Audio for new message received
-const newMessageAudio = new Audio('interface-124464.mp3');
+const newMessageAudio = new Audio('livechat-129007.mp3');
 
 // Array to store IDs of displayed messages
 let displayedMessageIds = [];
