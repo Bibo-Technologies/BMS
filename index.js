@@ -1,2319 +1,9221 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js";
-import { getDatabase,update, ref,remove, push,get, onValue,child,set } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js";
-import { getAuth, onAuthStateChanged,sendPasswordResetEmail , signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js";
-const firebaseConfig = {
-  apiKey: "AIzaSyCi_hufIZTzsYtdPGQtvtmKmAkkrydmn_A",
-authDomain: "abbah-83a7b.firebaseapp.com",
-databaseURL: "https://abbah-83a7b-default-rtdb.firebaseio.com",
-projectId: "abbah-83a7b",
-storageBucket: "abbah-83a7b.appspot.com",
-messagingSenderId: "379729759051",
-appId: "1:379729759051:web:e75528d61b02d1e4f536ce",
-measurementId: "G-H41J2WMR6S"
-};
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-storage.js";
+import { getDatabase, ref, remove, push, get, update, onValue, child, set } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js";
+import { getAuth, onAuthStateChanged,sendPasswordResetEmail,sendEmailVerification ,createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js";
+        const firebaseConfig = {
+              apiKey: "AIzaSyAisBpwnYt14S4NiLbcOiAhdINsqwSYJiI",
+  authDomain: "aleveltv-75194.firebaseapp.com",
+  databaseURL: "https://aleveltv-75194-default-rtdb.firebaseio.com",
+  projectId: "aleveltv-75194",
+  storageBucket: "aleveltv-75194.appspot.com",
+  messagingSenderId: "440342498130",
+  appId: "1:440342498130:web:20e2eb670b1cb2c39cc88b",
+  measurementId: "G-VTR1KGT4CW"
+            };
 
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
-const auth = getAuth(app); // Initialize Firebase Authentication
+          
+  // ... Your existing Firebase imports ...
+  const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const auth = getAuth(app);
 
-if ('serviceWorker' in navigator) {
-window.addEventListener('load', () => {
-  navigator.serviceWorker.register('service-worker.js')
-    .then(registration => {
-      console.log('Service Worker registered with scope:', registration.scope);
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+  // Check if the welcome popup has been shown
+  const hasShownPopup = localStorage.getItem('hasShownPopup');
+
+  if (!hasShownPopup) {
+    // Show the welcome popup
+    const overlay = document.getElementById('overlay');
+    const welcomePopup = document.getElementById('welcomePopup');
+    overlay.style.display = 'block';
+    welcomePopup.style.display = 'block';
+
+    // Fade in the welcome popup
+    setTimeout(() => {
+      welcomePopup.classList.remove('fade-in');
+    }, 1000); // Wait for 1 second (adjust as needed)
+
+    // Set the flag to indicate that the popup has been shown
+    localStorage.setItem('hasShownPopup', true);
+  }
+});
+
+function closeWelcomePopup() {
+  const overlay = document.getElementById('overlay');
+  const welcomePopup = document.getElementById('welcomePopup');
+
+  // Hide the overlay and the welcome popup after a delay
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    welcomePopup.style.display = 'none';
+  }, 1000); // Wait for 1 second (adjust as needed)
+}
+
+document.getElementById('subscribeButton').addEventListener('click', subscribeToFirebase);
+document.getElementById('closeButton').addEventListener('click', closeWelcomePopup);
+
+function subscribeToFirebase() {
+  var email = document.getElementById('email').value;
+
+  // Show spinner and update button text
+  document.getElementById('subscribeButton').style.display = 'none';
+  document.getElementById('spinner').style.display = 'inline-block';
+
+  // Push the email to Firebase Realtime Database
+  const emailsRef = ref(database, 'subscribedEmails');
+  push(emailsRef, email)
+    .then(() => {
+      // Hide spinner and show thank you message
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('thankYouMessage').style.display = 'block';
+
+      // Replace the existing content with the success message
+      replaceContentWithSuccessMessage();
+
+      // Close the welcome popup after 1 second
+      setTimeout(() => {
+        closeWelcomePopup();
+      }, 1000);
     })
     .catch(error => {
-      console.error('Service Worker registration failed:', error);
+      console.error('Error submitting email to Firebase:', error);
+
+      // Hide spinner and show an error message (if needed)
+      document.getElementById('spinner').style.display = 'none';
+      alert('There was an error subscribing. Please try again.');
     });
-});
+}
+
+function replaceContentWithSuccessMessage() {
+  // Replace the content inside the subscriptionContent div with the success message
+  document.getElementById('subscriptionContent').innerHTML = '';
 }
 
 
-let deferredPrompt;
-const installPopup = document.getElementById('installPopup');
-const installButton = document.getElementById('installButton');
 
-window.addEventListener('beforeinstallprompt', event => {
-event.preventDefault();
-deferredPrompt = event;
+// Function to create the cart dynamically
+function createCart() {
+  // Create the main cart div
+  const cartDiv = document.createElement("div");
+  cartDiv.id = "cart";
+  cartDiv.classList.add("cart");
 
-// Show the install popup
-installPopup.style.display = 'block';
-});
+  // Create the cart count span
+  const cartCountSpan = document.createElement("span");
+  cartCountSpan.id = "cart-count";
 
-installButton.addEventListener('click', () => {
-// Prompt the user to install
-deferredPrompt.prompt();
-deferredPrompt.userChoice.then(choiceResult => {
-  if (choiceResult.outcome === 'accepted') {
-    console.log('User accepted the A2HS prompt');
+  // Create the cart buttons div
+  const cartButtonsDiv = document.createElement("div");
+  cartButtonsDiv.id = "cart-buttons";
+
+  // Create the open cart button
+  const openCartBtn = document.createElement("button");
+  openCartBtn.id = "open-cart-btn";
+  openCartBtn.innerHTML = '<i class="fa fa-shopping-cart"></i>';
+
+  // Create the close cart button
+  const closeCartBtn = document.createElement("button");
+  closeCartBtn.id = "close-cart-btn";
+  closeCartBtn.innerHTML = '<i class="fa fa-times"></i>';
+
+  // Append buttons to the cart buttons div
+  cartButtonsDiv.appendChild(openCartBtn);
+  cartButtonsDiv.appendChild(closeCartBtn);
+
+  // Create the cart content div
+  const cartContentDiv = document.createElement("div");
+  cartContentDiv.id = "cart-content";
+
+  // Create the cart items div
+  const cartItemsDiv = document.createElement("div");
+  cartItemsDiv.id = "cart-items";
+
+ // Create the total price paragraph
+const totalPriceParagraph = document.createElement("p");
+totalPriceParagraph.id = "total-price";
+
+// Create the checkout button
+const checkoutBtn = document.createElement("button");
+checkoutBtn.id = "checkout-btn";
+checkoutBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Checkout';
+
+// Create a div to contain the button and total
+const buttonAndTotalContainer = document.createElement("div");
+buttonAndTotalContainer.classList.add("button-and-total-container");
+
+// Append items to the cart content div
+cartContentDiv.appendChild(cartItemsDiv);
+cartContentDiv.appendChild(buttonAndTotalContainer);
+
+// Append the total price and checkout button to the container
+buttonAndTotalContainer.appendChild(totalPriceParagraph);
+buttonAndTotalContainer.appendChild(checkoutBtn);
+
+
+  // Append elements to the main cart div
+  cartDiv.appendChild(cartCountSpan);
+  cartDiv.appendChild(cartButtonsDiv);
+  cartDiv.appendChild(cartContentDiv);
+
+  // Append the cart to the cart container
+  const cartContainer = document.getElementById("cart-container");
+  cartContainer.appendChild(cartDiv);
+
+  // Check if cart is empty and hide it initially
+  if (isCartEmpty()) {
+    cartDiv.style.display = "none";
+  }
+}
+
+// Function to check if the cart is empty
+function isCartEmpty() {
+  const cartItems = document.getElementById("cart-items");
+  return cartItems.children.length === 0;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    // The page has fully loaded, now you can safely create the cart
+    createCart();
+
+ // Show/hide the cart based on scroll position
+ window.addEventListener("scroll", () => {
+  const cart = document.getElementById("cart");
+  const distanceFromTop = window.pageYOffset || document.documentElement.scrollTop;
+  const scrollThreshold = 200; // Set the scroll height to trigger the cart display
+
+  if (distanceFromTop > scrollThreshold) {
+    cart.style.display = "block";
   } else {
-    console.log('User dismissed the A2HS prompt');
-  }
-  deferredPrompt = null;
-});
-
-// Hide the install popup
-installPopup.style.display = 'none';
-});
-
-
-
-
-function showMessage(message) {
-const messageElement = document.getElementById('message');
-messageElement.textContent = message;
-messageElement.style.display = 'block';
-
-// Hide the message after 4 seconds (4000 milliseconds)
-setTimeout(() => {
-  messageElement.style.display = 'none';
-}, 4000);
-}
-
-// Call showMessage with an empty message to hide the message on page load
-showMessage('');
-
-
-
-    
-// Ensure that authToken is defined in the global scope
-let authToken;
-let tokenExpiryTime;
-
-// Function to generate a token valid for 24 hours
-function generateToken() {
-authToken = Math.random().toString(36).substring(2);
-const currentTime = new Date();
-const tokenExpiryTime = new Date(currentTime.getTime() + 24 * 60 * 60 * 1000); // Token valid for 24 hours
-
-// Store token and expiry time in local storage
-localStorage.setItem('authToken', authToken);
-localStorage.setItem('tokenExpiryTime', tokenExpiryTime.toString());
-}
-
-
-// Function to retrieve token and its expiry time from local storage
-function retrieveTokenFromLocalStorage() {
-authToken = localStorage.getItem('authToken');
-const storedExpiryTime = localStorage.getItem('tokenExpiryTime');
-if (authToken && storedExpiryTime) {
-  tokenExpiryTime = new Date(storedExpiryTime);
-}
-}
-
-// Function to check if the token is still valid
-function isTokenValid() {
-const currentTime = new Date();
-return tokenExpiryTime > currentTime;
-}
-
-window.addEventListener('load', function() {
-  retrieveTokenFromLocalStorage(); // Retrieve token from local storage
-  // Check if token is valid, if not, redirect to the login page
-  if (!isTokenValid()) {
-    window.location.href = 'login.html'; // Replace 'login.html' with the URL of your login page
+    cart.style.display = "none";
   }
 });
 
 
 
 
-// Event listener for the "Forgot Password" link
-document.getElementById('forgotPasswordLink').addEventListener('click', function(event) {
-event.preventDefault();
 
-// Get the email entered by the user
-const email = document.getElementById('email').value;
 
-// Use Firebase sendPasswordResetEmail method with auth object
-sendPasswordResetEmail(auth, email)
-  .then(() => {
-    // Password reset email sent successfully
-    showMessage(' A password reset email has been sent. Please check your inbox.');
-  })
-  .catch((error) => {
-    // Password reset email failed to send
-    const errorMessage = error.message;
-    alert('Password reset email failed to send. ' + errorMessage);
-  });
-});
-// Function to display a message with optional retry button and success flag
-function displayMessage(title, message, isSuccess = false) {
-// Clear existing messages
-const existingMessages = document.querySelectorAll('.retry-message');
-existingMessages.forEach(function (message) {
-  message.remove();
-});
 
-// Create a div element for the message
-const messageDiv = document.createElement('div');
-messageDiv.classList.add('retry-message'); // Add the class for styling
 
-// Set background color to green for success message
-if (isSuccess) {
-  messageDiv.style.backgroundColor = '#4caf50';
-}
 
-// Create close button element
-const closeButton = document.createElement('button');
-closeButton.classList.add('close-btn');
-closeButton.innerHTML = '<i class="fa fa-times"></i>';
-closeButton.addEventListener('click', function () {
-  messageDiv.remove();
-});
 
-// Create title element
-const titleElement = document.createElement('h2');
-titleElement.textContent = title;
 
-// Create message element
-const messageElement = document.createElement('p');
-messageElement.textContent = message;
 
-// Append title, message, and close button to the message div
-messageDiv.appendChild(titleElement);
-messageDiv.appendChild(messageElement);
-//messageDiv.appendChild(closeButton);
 
-// Append the message div to the document body
-document.body.appendChild(messageDiv);
 
-// Automatically remove the message after 5 seconds (5000 milliseconds)
-setTimeout(function () {
-  messageDiv.remove();
-}, 1500);
-}
-// Function to display user information
-function displayUserInformation(user) {
-// Set the h2 element text to the user's display name
-const profileName = document.querySelector('.profile_info h2');
-profileName.textContent = user.displayName;
 
-// Set the profile image source to the user's profile photo URL
-const profileImage = document.querySelector('.profile_pic img');
-profileImage.src = user.photoURL;
+    // Declare userData variable in a higher scope
+    let userData = {};
 
-// Set the profile image in the dropdown menu
-const dropdownProfileImage = document.querySelector('.user-profile img');
-dropdownProfileImage.src = user.photoURL;
+// Function to show the popup with user details
+async function showPopupWithUserDetails() {
+  // Check if the user is authenticated
+  const user = auth.currentUser;
+  if (!user) {
+      console.log('User not authenticated');
 
-// Display success message
-displayMessage('', `Welcome, ${user.displayName}.`, true); // Pass true for success message
+      // Display a message and fade it in with an overlay
+      const messageContainer = document.getElementById('messageContainer');
+      const messageContent = document.getElementById('messageContent');
+      const overlay2 = document.getElementById('overlay6');
 
-// Reload the page content or perform any necessary actions for an authenticated user
-}
+      // Set the message content HTML, including the company logo and login button
+      messageContent.innerHTML = `
+          <div id="companyLogo" class="company-logo">
+              <img src="img/Devine Phones.png" alt="Company Logo">
+          </div>
+          <p>You are not signed in. Please sign in to access your account.</p>
+          <button id="loginButton" class="login-button">
+              <i class="fa fa-sign-in"></i> Login
+          </button>
+      `;
 
-// Function to handle sign-in success
-function handleSignInSuccess(user) {
-// Display user information
-displayUserInformation(user);
-}
+      // Add the "fade-in" class to apply the fade-in animation
+      messageContainer.classList.add('fade-in');
+      messageContainer.style.display = 'flex'; // Make the message container visible
+      overlay2.style.display = 'block';
 
-// Function to handle sign-in error
-function handleSignInError(error) {
-console.error('Error signing in:', error);
-// Display access denied message
-displayMessage('Access Denied. Please sign in with a valid email.');
-}
+      // Add a click event listener to the login button
+      const loginButton = document.getElementById('loginButton');
+      loginButton.addEventListener('click', function () {
+          window.location.href = 'login.html'; // Adjust the login page URL
+      });
 
-// Function to sign in with Google
-function signInWithGoogle() {
-var provider = new GoogleAuthProvider();
-signInWithPopup(auth, provider)
-  .then(function (result) {
-    const user = result.user;
-    handleSignInSuccess(user);
-  })
-  .catch(function (error) {
-    handleSignInError(error);
-  });
-}
-
-// Display the email sign-in popup on page load
-window.addEventListener('load', function() {
-auth.onAuthStateChanged(function(user) {
-  if (user) {
-    // User is signed in
-    displayUserInformation(user);
-  } else {
-    // User is not signed in, display the sign-in popup
-    signInWithGoogle();
+      return;
   }
-});
-});
 
-// Function to retry the sign-in process
-function retryCallback() {
-signInWithGoogle();
-}
+  // Display an overlay
+  const overlay2 = document.getElementById('overlay6');
+  overlay2.style.display = 'block';
 
+  // Show loader while fetching user details
+  const loader = document.getElementById('loader');
+  loader.style.display = 'block';
 
-// Reference the "staff" node in Firebase Realtime Database
-// Function to update the staff count
-function updateStaffCount() {
-const staffRef = ref(database, "staff");
+  // Retrieve user details from local storage
+  const userDetails = JSON.parse(localStorage.getItem('userDetails'));
 
-get(staffRef)
-  .then(snapshot => {
-    const staffData = snapshot.val();
-    const staffCount = staffData ? Object.keys(staffData).length : 0;
+  // Display user details in the popup with lazy load effect
+  const popup = document.getElementById('popup');
+  popup.style.display = 'block';
+  popup.classList.add('fade-in');
 
-    // Update the staff count in the HTML
-    const staffCountElement = document.getElementById("staffCount");
-    if (staffCountElement) {
-      staffCountElement.innerText = staffCount.toString();
-    }
-  })
-  .catch(error => {
-    console.error("Error fetching staff count:", error);
-  });
-}
-
-// Function to update the patients count
-function updatePatientsCount() {
-const patientsRef = ref(database, "patients");
-
-get(patientsRef)
-  .then(snapshot => {
-    const patientsData = snapshot.val();
-    const patientsCount = patientsData ? Object.keys(patientsData).length : 0;
-
-    // Update the patients count in the HTML
-    const patientsCountElement = document.getElementById("patientsCount");
-    if (patientsCountElement) {
-      patientsCountElement.innerText = patientsCount.toString();
-    }
-  })
-  .catch(error => {
-    console.error("Error fetching patients count:", error);
-  });
-}
-
-// Update counts initially
-updateStaffCount();
-updatePatientsCount();
-
-// Refresh counts every second
-setInterval(() => {
-updateStaffCount();
-updatePatientsCount();
-}, 1000);
-
-
-
-// Function to open the popup
-function openExpenseSummaryPopup() {
-          const overlay = document.getElementById('ExpenseSummaryPopupOverlay');
-          const ExpenseSummaryPopup = document.getElementById('ExpenseSummaryPopup');
-          overlay.style.display = 'block';
-          ExpenseSummaryPopup.style.display = 'block';
-
-          // Fetch and display daily expenses when the popup is opened
-          const startDate = document.getElementById('dailystartDate').value;
-          const endDate = document.getElementById('dailyendDate').value;
-          fetchAndDisplayDailyExpenses(startDate, endDate);
-      }
-
-      // Function to close the popup
-      function closeExpenseSummaryPopup() {
-          const overlay = document.getElementById('ExpenseSummaryPopupOverlay');
-          const ExpenseSummaryPopup = document.getElementById('ExpenseSummaryPopup');
-          overlay.style.display = 'none';
-          ExpenseSummaryPopup.style.display = 'none';
-      }
-
-      // Attach click event listeners to buttons
-      document.getElementById('showPopupButton').addEventListener('click', openExpenseSummaryPopup);
-      document.getElementById('closePopupButton').addEventListener('click', closeExpenseSummaryPopup);
-
-
-
-
-// Function to filter daily expenses by date
-function filterExpensesByDate() {
-const startDateValue = document.getElementById('dailystartDate').value;
-const endDateValue = document.getElementById('dailyendDate').value;
-
-if (!startDateValue || !endDateValue) {
-  alert('Please select both start and end dates.');
-  return;
-}
-
-const startDate = new Date(startDateValue);
-const endDate = new Date(endDateValue);
-
-fetchAndDisplayDailyExpenses(startDate, endDate);
-}
-
-// Function to render the filtered daily expenses in the table
-function renderFilteredDailyExpenses(filteredExpenses) {
-const dailyExpensesTableBody = document.getElementById('dailyExpensesBody');
-dailyExpensesTableBody.innerHTML = '';
-
-filteredExpenses.forEach((expense) => {
-  const row = document.createElement('tr');
-  row.innerHTML = `
-    <td>${expense.date}</td>
-    <td>${expense.amount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
-    <td>${expense.expense}</td>
-    
-    <td>
-      <button class="delete-button2" onclick="deleteDailyExpense('${expense.key}')">Delete</button>
-    </td>
+  const userDetailsElement = document.getElementById('userDetails');
+  userDetailsElement.innerHTML = `
+      <div class="user-info">
+          <p class="accountt"> Account Details </p>
+          <p>Email: ${userDetails.email}</p>
+      </div>
   `;
 
-  dailyExpensesTableBody.appendChild(row);
-});
-}
+  // Fetch additional details from Firebase using the user's UID
+  const userId = userDetails.uid;
+  const userRef = ref(database, 'users/' + userId);
+
+  try {
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+          const userData = snapshot.val();
+          userDetailsElement.innerHTML += `
+              <table class="additional-info-table">
+                  <tr>
+                      <th>First Name</th>
+                      <td>${userData.firstName || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                      <th>Last Name</th>
+                      <td>${userData.lastName || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                      <th>Telephone</th>
+                      <td>${userData.telephone || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                      <th>Date of Birth</th>
+                      <td>${userData.dob || 'N/A'}</td>
+                  </tr>
+              </table>
+          `;
+            // Hide the loader when user details are loaded
+            loader.style.display = 'none';
+        
+
+            // Display profile picture if available or show a default profile icon
+            const profilePictureElement = document.getElementById('profilePicture');
+            if (user.photoURL) {
+                profilePictureElement.src = user.photoURL;
+                profilePictureElement.style.display = 'block';
+            } else {
+                // Show a default profile icon
+                profilePictureElement.src = 'img/profile.png'; // Replace with your default icon path
+                profilePictureElement.style.display = 'block';
+            }
 
-     // Add event listener to the "Filter by Date" button
-     document.getElementById('filterByDateButton').addEventListener('click', filterExpensesByDate);
-
-// Function to fetch and display the daily expenses in the table
-function fetchAndDisplayDailyExpenses(startDate, endDate) {
-const dailyExpensesRef = ref(database, 'daily_expenses');
-
-onValue(dailyExpensesRef, (snapshot) => {
-  const dailyExpensesData = snapshot.val();
-
-  if (dailyExpensesData) {
-    const dailyExpensesTableBody = document.getElementById('dailyExpensesBody');
-    dailyExpensesTableBody.innerHTML = '';
-
-    // Create an object to store daily expenses and total amount for each date
-    const dailyExpensesSummary = {};
-    let totalAmountSum = 0;  // Initialize total amount sum
-
-    for (const dateKey in dailyExpensesData) {
-      const dateExpenses = dailyExpensesData[dateKey];
-
-      // Extract the date from the Firebase key (assuming the key is in ISO format)
-      const dateParts = dateKey.split('-'); // Split the key by hyphens
-      const formattedDate = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
-
-      for (const expenseKey in dateExpenses) {
-        const expenseData = dateExpenses[expenseKey];
-
-        // Check if the expense date falls within the selected date range
-        const expenseDate = new Date(expenseData.date);
-
-        if (!startDate || !endDate || (expenseDate >= startDate && expenseDate <= endDate)) {
-          if (!dailyExpensesSummary[formattedDate]) {
-            // Initialize the daily summary if it doesn't exist
-            dailyExpensesSummary[formattedDate] = {
-              count: 0,
-              totalAmount: 0,
-            };
-          }
-
-          // Update the daily summary with the current expense
-          dailyExpensesSummary[formattedDate].count++;
-          dailyExpensesSummary[formattedDate].totalAmount += expenseData.amount;
-
-          // Accumulate total amount sum
-          totalAmountSum += expenseData.amount;
-        }
-      }
-    }
-
-    // Sort the summary by date in descending order
-    const sortedDates = Object.keys(dailyExpensesSummary).sort((a, b) => {
-      const dateA = new Date(a);
-      const dateB = new Date(b);
-      return dateB - dateA;
-    });
-
-    // Iterate through the sorted daily summary and display in the table
-    for (const date of sortedDates) {
-      const summary = dailyExpensesSummary[date];
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${date}</td>
-        <td>${summary.count}</td>
-        <td>${summary.totalAmount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
-        <td>
-          <button class="details-button" data-date="${date}">Details</button>
-        </td>
-      `;
-
-      dailyExpensesTableBody.appendChild(row);
-    }
-
-// Display the total amount sum in a div
-const totalAmountSumDiv = document.getElementById('totalAmountSum');
-totalAmountSumDiv.innerHTML = `<i class="fas fa-money-bill"></i>  Table Summation : ${totalAmountSum.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
-
-    // Add event listeners to the "Details" buttons
-    const detailsButtons = document.querySelectorAll('.details-button');
-    detailsButtons.forEach((button) => {
-      button.addEventListener('click', function () {
-        // Get the date from the date cell in the same row
-        const dateCell = this.parentElement.parentElement.querySelector('td:first-child');
-        const selectedDateCellFormat = dateCell.textContent.trim(); // Trim any extra whitespace
-
-        // Convert the date to Firebase format
-        const selectedDateFirebaseFormat = convertDateToFirebaseFormat(selectedDateCellFormat);
-
-        // Call the function to show details for the selected date
-        searchAndDisplayExpensesByDate(selectedDateFirebaseFormat);
-      });
-    });
-  }
-});
-// Add event listener to the "Refresh Filter" button
-const clearFilterButton = document.getElementById('clear-filter-details');
-clearFilterButton.addEventListener('click', function () {
-// Clear the filter by calling the function with empty startDate and endDate
-fetchAndDisplayDailyExpenses(null, null);
-
-// Clear the input fields
-const startDateInput = document.getElementById('dailystartDate');
-const endDateInput = document.getElementById('dailyendDate');
-startDateInput.value = '';
-endDateInput.value = '';
-});
-
-}
-
-
-
-
-
-// Function to convert a date from 'MM/DD/YYYY' format to 'YYYY-MM-DD' format
-function convertDateToFirebaseFormat(dateString) {
-const parts = dateString.split('/');
-const year = parts[2];
-const month = parts[0].padStart(2, '0');
-const day = parts[1].padStart(2, '0');
-return `${year}-${month}-${day}`;
-}
-// Function to search and display expenses by date
-function searchAndDisplayExpensesByDate(searchDate) {
-const detailsPopup = document.getElementById('detailsPopup');
-const dailyExpensesDetails = document.getElementById('dailyExpensesDetails');
-const popupTitle = document.getElementById('popupTitle');
-
-// Update the popup title with the selected date
-popupTitle.textContent = `Expenses made on ${searchDate}`;
-
-// Clear the previous details
-dailyExpensesDetails.innerHTML = '';
-
-// Reference the Firebase node for the selected date
-const dateExpensesRef = ref(database, 'daily_expenses/' + searchDate);
-
-get(dateExpensesRef)
-  .then((snapshot) => {
-    const dateExpensesData = snapshot.val();
-
-    if (dateExpensesData) {
-      // Create a table to display expenses, their times, and delete buttons
-      const table = document.createElement('table');
-      table.classList.add('expense-table');
-
-      // Create a table header
-      const headerRow = table.createTHead().insertRow(0);
-      const expenseHeader = document.createElement('th');
-      expenseHeader.textContent = 'Expense';
-      headerRow.appendChild(expenseHeader);
-      const timeHeader = document.createElement('th');
-      timeHeader.textContent = 'Time';
-      headerRow.appendChild(timeHeader);
-      const amountHeader = document.createElement('th');
-      amountHeader.textContent = 'Amount (UGX)';
-      headerRow.appendChild(amountHeader);
-      const actionHeader = document.createElement('th');
-      actionHeader.textContent = 'Action';
-      headerRow.appendChild(actionHeader);
-
-      // Initialize total amount
-      let totalAmount = 0;
-
-       // Populate the details for the selected date
-       for (const key in dateExpensesData) {
-         const expenseData = dateExpensesData[key];
-       
-         // Create a row in the table
-         const row = table.insertRow(-1);
-         const expenseCell = row.insertCell(0);
-         const timeCell = row.insertCell(1);
-         const amountCell = row.insertCell(2);
-         const actionCell = row.insertCell(3);
-       
-        // Fill the cells with data
-        expenseCell.textContent = expenseData.expense;
-        timeCell.textContent = new Date(expenseData.date).toLocaleTimeString('en-US');
-        amountCell.textContent = expenseData.amount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' });
-
-         // Create a delete button
-         const deleteButton = document.createElement('button');
-         deleteButton.textContent = 'Delete';
-         deleteButton.classList.add('delete-button');
-
-         // Attach the event listener directly to the delete button
-         deleteButton.addEventListener('click', () => deleteDailyExpense(searchDate, key));
-
-         // Add the delete button to the action cell
-         actionCell.appendChild(deleteButton);
-               // Add the expense amount to the total
-        totalAmount += expenseData.amount;
-      }
-
-      // Create a row for the total
-      const totalRow = table.insertRow(-1);
-      const totalLabelCell = totalRow.insertCell(0);
-      totalLabelCell.textContent = 'Total:';
-      const totalAmountCell = totalRow.insertCell(1);
-      totalAmountCell.colSpan = 3;
-      totalAmountCell.textContent = totalAmount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' });
-
-      // Append the table to dailyExpensesDetails
-      dailyExpensesDetails.appendChild(table);
-    } else {
-      // Handle the case where there are no expenses for the selected date
-      dailyExpensesDetails.innerHTML = 'No expenses found for the selected date.';
-    }
-
-    // Show the details popup
-    detailsPopup.style.display = 'block';
-
-    // Add event listener to close the details popup
-    document.getElementById('closeDetailsButton').addEventListener('click', closeDetailsPopup);
-  })
-  .catch((error) => {
-    console.error('Error fetching expenses:', error);
-  });
-  
-}
-
-
-// Function to close the details popup
-function closeDetailsPopup() {
-const detailsPopup = document.getElementById('detailsPopup');
-detailsPopup.style.display = 'none';
-}
-
-
-// Function to delete an expense
-function deleteDailyExpense(date, expenseKey) {
-// Ask the user to enter the password
-const enteredPassword = window.prompt('Enter the password to delete the expense:');
-const correctPassword = 'mm'; // Replace 'your_password_here' with the actual password
-
-if (enteredPassword === correctPassword) {
-  // Reference the expense to be deleted
-  const expenseRef = ref(database, `daily_expenses/${date}/${expenseKey}`);
-
-  // Remove the expense from Firebase
-  remove(expenseRef)
-    .then(() => {
-      showMessage('Daily expense deleted successfully!');
-      // Refresh the details popup to reflect the changes
-      searchAndDisplayExpensesByDate(date);
-    })
-    .catch((error) => {
-      console.error('Error deleting expense:', error);
-    });
-} else {
-  showMessage('Password incorrect. Deletion canceled.');
-}
-}
-
-
-
-
-
-
-
-
-
-// Fetch and display the daily expenses in the table when the DOM content is loaded
-document.addEventListener('DOMContentLoaded', () => {
-fetchAndDisplayDailyExpenses();
-});
-function calculateAndDisplayTotalSums(expensesData) {
-let totalSumMonthly = 0;
-let totalSumYearly = 0;
-let totalSumAfter2Years = 0;
-let totalSumAfter3Years = 0;
-let totalSumAfter5Years = 0;
-
-for (const key in expensesData) {
-  const expenseData = expensesData[key];
-  switch (expenseData.scheme) {
-    case 'monthly':
-      totalSumMonthly += expenseData.amount;
-      break;
-    case 'yearly':
-      totalSumYearly += expenseData.amount;
-      break;
-    case 'after_2_years':
-      totalSumAfter2Years += expenseData.amount;
-      break;
-    case 'after_3_years':
-      totalSumAfter3Years += expenseData.amount;
-      break;
-    case 'after_5_years':
-      totalSumAfter5Years += expenseData.amount;
-      break;
-    default:
-      break;
-  }
-}
-
-// Update the existing information
-const totalSumMonthlyDiv = document.getElementById('totalSumMonthly');
-totalSumMonthlyDiv.textContent = `Billed (Monthly): ${totalSumMonthly.toLocaleString('en-US', {
-  style: 'currency',
-  currency: 'UGX',
-})}`;
-
-const totalSumYearlyDiv = document.getElementById('totalSumYearly');
-totalSumYearlyDiv.textContent = `Billed  (Yearly): ${totalSumYearly.toLocaleString('en-US', {
-  style: 'currency',
-  currency: 'UGX',
-})}`;
-
-const totalSumAfter2YearsDiv = document.getElementById('totalSumAfter2Years');
-totalSumAfter2YearsDiv.textContent = `Billed  (After 2 Years): ${totalSumAfter2Years.toLocaleString('en-US', {
-  style: 'currency',
-  currency: 'UGX',
-})}`;
-
-const totalSumAfter3YearsDiv = document.getElementById('totalSumAfter3Years');
-totalSumAfter3YearsDiv.textContent = `Billed  (After 3 Years): ${totalSumAfter3Years.toLocaleString('en-US', {
-  style: 'currency',
-  currency: 'UGX',
-})}`;
-
-const totalSumAfter5YearsDiv = document.getElementById('totalSumAfter5Years');
-totalSumAfter5YearsDiv.textContent = `Billed  (After 5 Years): ${totalSumAfter5Years.toLocaleString('en-US', {
-  style: 'currency',
-  currency: 'UGX',
-})}`;
-// Create a pie chart
-const expensesPieChart = document.getElementById('expensesPieChart');
-new Chart(expensesPieChart, {
-type: 'pie',
-data: {
-  labels: ['Monthly', 'Yearly', 'After 2 Years', 'After 3 Years', 'After 5 Years'],
-  datasets: [
-    {
-      data: [totalSumMonthly, totalSumYearly, totalSumAfter2Years, totalSumAfter3Years, totalSumAfter5Years],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-      ],
-    },
-  ],
-},
-options: {
-  responsive: true,
-  maintainAspectRatio: false,
-  title: {
-    display: true,
-    text: 'Expense Distribution',
-  },
-  plugins: {
-    legend: {
-      labels: {
-        color: 'white', // Set label text color to white
-      },
-    },
-  },
-},
-});
-
-}
-
-// Function to fetch and display the schemed expenses in the table with retry mechanism
-function fetchAndDisplaySchemedExpensesWithRetry(maxRetries, retryDelay) {
-let retries = 0;
-
-function fetchSchemedExpenses() {
-  retries++;
-
-  const schemedExpensesRef = ref(database, 'schemed_expenses');
-
-  // Return a promise for the onValue event to enable retry mechanism
-  return new Promise((resolve, reject) => {
-    onValue(
-      schemedExpensesRef,
-      (snapshot) => {
-        const schemedExpensesData = snapshot.val();
-
-  if (schemedExpensesData) {
-    const schemedExpensesTableBody = document.getElementById('schemedExpensesBody');
-    schemedExpensesTableBody.innerHTML = '';
-
-    for (const key in schemedExpensesData) {
-      const expenseData = schemedExpensesData[key];
-
-      // Format the date in MM/DD/YYYY format
-      const formattedDate = new Date(expenseData.date).toLocaleDateString('en-US');
-
-      // Calculate the due date based on the payment scheme
-      const paymentScheme = expenseData.scheme;
-      const startDate = new Date(expenseData.date);
-      let dueDate;
-      if (paymentScheme === 'monthly') {
-        dueDate = new Date(startDate);
-        dueDate.setMonth(startDate.getMonth() + 1);
-      } else if (paymentScheme === 'yearly') {
-        dueDate = new Date(startDate);
-        dueDate.setFullYear(startDate.getFullYear() + 1);
-      } else if (paymentScheme === 'after_2_years') {
-        dueDate = new Date(startDate);
-        dueDate.setFullYear(startDate.getFullYear() + 2);
-      } else if (paymentScheme === 'after_3_years') {
-        dueDate = new Date(startDate);
-        dueDate.setFullYear(startDate.getFullYear() + 3);
-      } else if (paymentScheme === 'after_5_years') {
-        dueDate = new Date(startDate);
-        dueDate.setFullYear(startDate.getFullYear() + 5);
-      }
-
-      // Format the due date in MM/DD/YYYY format
-      const formattedDueDate = dueDate.toLocaleDateString('en-US');
-
-      // Calculate the number of days left between current date and due date
-      const currentDate = new Date();
-      const daysLeft = Math.ceil((dueDate - currentDate) / (1000 * 60 * 60 * 24));
-
-      // Determine the text color for the "Days Left" column based on the number of days
-      let daysLeftColorClass;
-      if (daysLeft <= 0) {
-        daysLeftColorClass = 'red-text';
-      } else if (daysLeft <= 10) {
-        daysLeftColorClass = 'orange-text';
-      } else {
-        daysLeftColorClass = 'green-text';
-      }
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${expenseData.expense}</td>
-        <td>${expenseData.amount.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
-        <td>${expenseData.scheme}</td>
-        <td>${formattedDate}</td>
-        <td>${formattedDueDate}</td>
-        <td class="${daysLeftColorClass}">${daysLeft} days</td>
-        <td>
-          <button class="delete-button" data-key="${key}"><i class="fa fa-trash"></i></button>
-         <button class="renew-button" data-key="${key}"><i class="fa fa-refresh"></i></button>
-        </td>
-      `;
-
-      schemedExpensesTableBody.appendChild(row);
-    }
-
-    // Add event listeners to the "Delete" buttons
-    const deleteButtons = document.querySelectorAll('.delete-button');
-    deleteButtons.forEach((button) => {
-      button.addEventListener('click', function () {
-        const key = this.dataset.key;
-        deleteExpense(key);
-      });
-    });
-
-    // Add event listeners to the "Renew" buttons
-    const renewButtons = document.querySelectorAll('.renew-button');
-    renewButtons.forEach((button) => {
-      button.addEventListener('click', function () {
-        const key = this.dataset.key;
-        renewExpense(key);
-      });
-    });
-      // Call the function to calculate and display the total sum
-      calculateAndDisplayTotalSums(schemedExpensesData);
-      console.log('Schemed expenses fetched successfully!');
-          resolve(); // Resolve the promise when schemed expenses are fetched
         } else {
-          // If data is not available, retry after a delay
-          if (retries < maxRetries) {
-            console.log(`Retrying in ${retryDelay} milliseconds...`);
-            setTimeout(() => {
-              fetchSchemedExpenses().then(resolve); // Retry by calling fetchSchemedExpenses again
-            }, retryDelay);
-          } else {
-            console.error('Exceeded maximum retries. Unable to fetch schemed expenses.');
-            reject(); // Reject the promise when retries are exhausted
-          }
+            userDetailsElement.innerHTML += `<p>No user details found.</p>`;
         }
-      },
-      (error) => {
-        console.error('Error fetching schemed expenses:', error);
+    } catch (error) {
+        console.error('Error fetching user details from Firebase:', error.message);
+    }
 
-        if (retries < maxRetries) {
-          console.log(`Retrying in ${retryDelay} milliseconds...`);
-          setTimeout(() => {
-            fetchSchemedExpenses().then(resolve); // Retry by calling fetchSchemedExpenses again
-          }, retryDelay);
+// Show the popup
+document.getElementById("popup").style.display = "block";
+document.body.classList.add("no-scroll"); // Disable scrolling
+    }
+
+    // Use onAuthStateChanged to check when the authentication state changes
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // User is signed in
+            // You can now call showPopupWithUserDetails here or wherever appropriate
         } else {
-          console.error('Exceeded maximum retries. Unable to fetch schemed expenses.');
-          reject(); // Reject the promise when retries are exhausted
+            // User is signed out
+            console.log('User signed out');
         }
-      }
-    );
-  });
-}
-
-// Start the initial fetch attempt
-fetchSchemedExpenses().catch(() => {
-  console.log('Initial fetch failed. Retrying...');
-  return fetchSchemedExpenses(); // Retry the initial fetch
-});
-}
-
-// Call the function with maximum retries of 3 and a retry delay of 1000 milliseconds (1 second)
-fetchAndDisplaySchemedExpensesWithRetry(3, 1000);    
-
-// Function to delete the expense from Firebase
-function deleteExpense(key) {
-// Ask the user to enter the password
-const enteredPassword = window.prompt('Enter the password to delete the expense:');
-const correctPassword = 'mm'; // Replace 'your_password_here' with the actual password
-
-if (enteredPassword === correctPassword) {
-  const expenseRef = ref(database, `schemed_expenses/${key}`);
-  remove(expenseRef)
-    .then(() => {
-      showMessage('Expense deleted successfully!');
-    })
-    .catch((error) => {
-      showMessage('Error deleting expense:', error);
     });
-} else {
-  showMessage('Password incorrect. Deletion canceled.');
-}
-}
 
-// Function to renew the expense with the current date in Firebase
-function renewExpense(key) {
-// Ask the user to enter the password
-const enteredPassword = window.prompt('Enter the password to renew the expense:');
-const correctPassword = 'mm'; // Replace 'your_password_here' with the actual password
-
-if (enteredPassword === correctPassword) {
-  const expenseRef = ref(database, `schemed_expenses/${key}`);
-  const currentDate = new Date().toISOString();
-
-  update(expenseRef, {
-    date: currentDate
-  })
-    .then(() => {
-      showMessage('Expense renewed successfully!');
-    })
-    .catch((error) => {
-      showMessage('Error renewing expense:', error);
-    });
-} else {
-  showMessage('Password incorrect. Renewal canceled.');
-}
-}
-
-
-// Call the functions to fetch and display the expenses data
-fetchAndDisplayDailyExpenses();
-
-
-
-// Function to save the schemed expense details to Firebase
-function saveSchemeExpense(expense, amount, scheme) {
-const schemeExpensesRef = ref(database, 'schemed_expenses');
-const newSchemeExpenseRef = push(schemeExpensesRef);
-
-// Get the current date and time
-const currentDate = new Date();
-const currentDateTimeString = currentDate.toISOString(); // Convert to ISO string format
-
-// Create an object with the scheme expense details
-const schemeExpenseData = {
-  expense: expense,
-  amount: amount,
-  scheme: scheme,
-  date: currentDateTimeString // Add the date and time to the object
-};
-
-// Save the scheme expense data to Firebase
-set(newSchemeExpenseRef, schemeExpenseData)
-  .then(() => {
-    showMessage('Schemed expense details saved successfully!');
-  })
-  .catch((error) => {
-    showMessage('Error saving schemed expense details:', error);
-  });
-}
-
-
-// Add event listener to the "Save" button in the scheme popup
-const saveSchemeExpenseButton = document.getElementById('saveSchemeExpenseButton');
-saveSchemeExpenseButton.addEventListener('click', function () {
-const schemeExpenseInput = document.getElementById('schemeExpense');
-const schemeAmountInput = document.getElementById('schemeAmount');
-const schemePaymentSelect = document.getElementById('schemePayment');
-
-const schemeExpense = schemeExpenseInput.value.trim();
-const schemeAmount = parseFloat(schemeAmountInput.value);
-const schemePayment = schemePaymentSelect.value;
-
-if (schemeExpense && !isNaN(schemeAmount) && schemeAmount > 0) {
-  // Save the schemed expense details to Firebase
-  saveSchemeExpense(schemeExpense, schemeAmount, schemePayment);
-
-  // Clear the input fields
-  schemeExpenseInput.value = '';
-  schemeAmountInput.value = '';
-  
-  // Close the scheme popup
-  closeSchemePopup();
-} else {
-  alert('Please enter valid expense and amount.');
-}
-});
-
-// Function to open the scheme popup
-function openSchemePopup() {
-const schemePopupContainer = document.getElementById('schemePopupContainer');
-const schemeOverlay = document.getElementById('schemeOverlay');
-schemePopupContainer.classList.add('active');
-schemeOverlay.classList.add('active');
-}
-
-// Function to close the scheme popup
-function closeSchemePopup() {
-const schemePopupContainer = document.getElementById('schemePopupContainer');
-const schemeOverlay = document.getElementById('schemeOverlay');
-schemePopupContainer.classList.remove('active');
-schemeOverlay.classList.remove('active');
-}
-
-// Add event listener to the "Open Scheme Popup" button
-const openSchemePopupButton = document.getElementById('openSchemePopupButton');
-openSchemePopupButton.addEventListener('click', openSchemePopup);
-
-// Add event listener to the "Close" button in the scheme popup
-const schemeCloseButton = document.getElementById('schemeCloseButton');
-schemeCloseButton.addEventListener('click', closeSchemePopup);
-
-
-// Function to save the expense details to Firebase
-function saveExpenseDetails(expense, amount) {
-const expensesRef = ref(database, 'daily_expenses');
-
-// Get the current date in ISO string format (YYYY-MM-DD)
-const currentDate = new Date().toISOString().split('T')[0]; // Extract the date part
-
-// Create an object with the expense details
-const expenseData = {
-  expense: expense,
-  amount: amount,
-  date: new Date().toISOString(), // Convert the date to ISO format
-};
-
-// Save the expense data under the current date node in Firebase
-const dateNodeRef = child(expensesRef, currentDate);
-push(dateNodeRef, expenseData)
-  .then(() => {
-    showMessage('Expense details saved successfully!');
-  })
-  .catch((error) => {
-    showMessage('Error saving expense details:', error);
-  });
-}
-
-
-// Add event listener to the "Save" button in the popup
-const saveExpenseButton = document.getElementById('saveExpenseButton');
-saveExpenseButton.addEventListener('click', function () {
-const expenseInput = document.getElementById('expense');
-const amountInput = document.getElementById('amount');
-
-const expense = expenseInput.value.trim();
-const amount = parseFloat(amountInput.value);
-
-if (expense && !isNaN(amount) && amount > 0) {
-  // Save the expense details to Firebase
-  saveExpenseDetails(expense, amount);
-
-  // Clear the input fields
-  expenseInput.value = '';
-  amountInput.value = '';
-  
-  // Close the popup
+// Add an event listener to the close button
+document.getElementById("closePopupBtn").addEventListener("click", function() {
   closePopup();
-} else {
-  alert('Please enter valid expense and amount.');
-}
 });
-
-// Function to open the popup
-function openPopup() {
-const popupContainer = document.getElementById('popupContainer');
-const overlay = document.getElementById('overlay');
-popupContainer.classList.add('active');
-overlay.classList.add('active');
-}
 
 // Function to close the popup
 function closePopup() {
-const popupContainer = document.getElementById('popupContainer');
-const overlay = document.getElementById('overlay');
-popupContainer.classList.remove('active');
-overlay.classList.remove('active');
+  document.getElementById("popup").style.display = "none";
+  document.getElementById('overlay6').style.display = 'none';
+  document.body.classList.remove("no-scroll"); // Enable scrolling
 }
 
 
-const openPopupButton = document.getElementById('openPopupButton');
-const popupContainer = document.getElementById('popupContainer');
-const overlay = document.getElementById('overlay');
-const closeButton = document.getElementById('closeButton');
-
-openPopupButton.addEventListener('click', () => {
-popupContainer.style.display = 'block';
-overlay.style.display = 'block';
+// Event listener for the "Logout" button
+document.getElementById("logoutBtn").addEventListener("click", function () {
+    // Display confirmation popup
+    showLogoutConfirmationPopup();
 });
 
-closeButton.addEventListener('click', () => {
-popupContainer.style.display = 'none';
-overlay.style.display = 'none';
-});
+// Function to show the logout confirmation popup
+function showLogoutConfirmationPopup() {
+    const confirmationPopup = document.getElementById('confirmationPopup');
+    const overlay = document.getElementById('overlay3');
 
-// Assuming you have already initialized Firebase and have a reference to the database
-// Add event listener to the "Clear Filter" button
-const clearFilterButton2 = document.getElementById('clear-filter-button2');
-clearFilterButton2.addEventListener('click', function () {
-// Reset the date inputs
-document.getElementById('start-date2').value = '';
-document.getElementById('end-date2').value = '';
+    // Display the confirmation popup
+    confirmationPopup.style.display = 'block';
+    overlay.style.display = 'block';
 
-// Display all tests again
-fetchAndDisplayTests();
-});
+    // Add event listeners to "Yes" and "No" buttons
+    const yesButton = document.getElementById('confirmYesBtn');
+    const noButton = document.getElementById('confirmNoBtn');
 
-// Add event listener to the "Filter" button
-const filterButton2 = document.getElementById('filter-button2');
-filterButton2.addEventListener('click', function () {
-// Get the selected start and end dates
-const startDateValue = document.getElementById('start-date2').value;
-const endDateValue = document.getElementById('end-date2').value;
-
-// Convert the date strings to Date objects
-const startDate2 = new Date(startDateValue);
-const endDate2 = new Date(endDateValue);
-
-// Filter the tests based on the selected date range
-filterTestsByDate(startDate2, endDate2).then((filteredTests) => {
-  // Render the filtered tests in the table
-  renderFilteredTests(filteredTests);
-});
-});
-
-// Function to filter the tests based on the selected date range
-function filterTestsByDate(startDate2, endDate2) {
-// Get a reference to the "patients" node in Firebase
-const patientsRef = ref(database, 'patients');
-
-// Fetch the patient data from Firebase
-return get(patientsRef).then((snapshot) => {
-    const patientsData = snapshot.val();
-    const filteredTests = [];
-
-    // Check if patientsData exists and contains patient objects
-    if (patientsData) {
-      // Loop through each patient in the patientsData
-      for (const patientId in patientsData) {
-        const patient = patientsData[patientId];
-
-        // Check if the patient has the "testsTaken" node
-        if (patient.hasOwnProperty('testsTaken')) {
-          const testsTaken = patient.testsTaken;
-
-          // Loop through each test with unique identifiers
-          for (const testId in testsTaken) {
-            const testData = testsTaken[testId];
-            const dateTakenValue = testData.dateTaken;
-
-            // Check if the test date is within the selected date range
-            if (dateTakenValue >= startDate2 && dateTakenValue <= endDate2) {
-              // Add the test data to the filteredTests array
-              filteredTests.push({
-                patientId: patientId,
-                testId: testId,
-                testsTakenValue: testData.testsTaken,
-                
-                dateTakenValue: new Date(testData.dateTaken), // Convert to Date object
-                priceValue: testData.price
-              });
-            }
-            
-          }
-        }
-      }
-    }
-
-    return filteredTests;
-
-  }).catch((error) => {
-    console.error('Error fetching patients data:', error);
-    return [];
-  });
-}
-// Function to render the filtered tests in the table
-function renderFilteredTests(filteredTests) {
-  // Create a table element
-  const table = document.createElement('table');
-  table.classList.add('test-table');
-// Calculate total price
-let totalPrice = 0;
-filteredTests.forEach(test => {
-  totalPrice += test.priceValue;
-});
-// Display total price in the div
-const totalPriceDiv = document.getElementById('total-price');
-totalPriceDiv.innerHTML = `Total Tests Revenue: ${totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
-
-  // Create the table header row
-  const headerRow = document.createElement('tr');
-  headerRow.innerHTML = `
-    <th>Patient</th>
-    <th>Test ID</th>
-    <th>Tests Taken</th>
-  
-    <th>Date Taken</th>
-    <th>Price (UGX)</th>
-  `;
-  table.appendChild(headerRow);
-
-  // Loop through each filtered test and create table rows
-  filteredTests.forEach(test => {
-    const row = document.createElement('tr');
-     // Format the dateTakenValue in MM/DD/YYYY format
-  const formattedDate = test.dateTakenValue.toLocaleDateString('en-US');
-
-    row.innerHTML = `
-      <td>${test.patientId}</td>
-      <td>${test.testId}</td>
-      <td>${test.testsTakenValue}</td>
-      
-      <td>${formattedDate}</td>
-      <td>${test.priceValue.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}</td>
-    `;
-    table.appendChild(row);
-  });
-
-  // Replace the existing table (if any) with the new table
-  const testTableContainer = document.getElementById('test-table-container');
-  testTableContainer.innerHTML = '';
-  testTableContainer.appendChild(table);
+    yesButton.addEventListener('click', handleLogoutConfirmation);
+    noButton.addEventListener('click', closeLogoutConfirmationPopup);
 }
 
-// Define variables
-let testsData = [];
-const testsPerPage = 10;
-let currentPage = 1;
-
-// Function to fetch and display tests data with pagination
-function fetchAndDisplayTestsWithPagination() {
-const testTableContainer = document.getElementById('test-table-container');
-
-// Calculate the start and end indices for the current page
-const startIndex = (currentPage - 1) * testsPerPage;
-const endIndex = startIndex + testsPerPage;
-
-// Create a subset of tests for the current page
-const testsForPage = testsData.slice(startIndex, endIndex);
-
-// Create a table element
-const table = document.createElement('table');
-table.classList.add('test-table');
-
-// Create the table header row
-const headerRow = document.createElement('tr');
-headerRow.innerHTML = `
-  <th>Patient</th>
-  <th>Test ID</th>
-  <th>Tests Taken</th>
-  <th>Date Taken</th>
-  <th>Price (UGX)</th>
-`;
-table.appendChild(headerRow);
-
-// Calculate total price while rendering the table
-let totalPrice = 0;
-
-// Loop through testsForPage and render the table
-testsForPage.forEach((test) => {
-  const { patientId, testId, testsTaken, dateTaken, price } = test;
-
-  // Format the dateTaken in MM/DD/YYYY format
-  const formattedDate = new Date(dateTaken).toLocaleDateString('en-US');
-
-  // Create a row element for each test
-  const row = document.createElement('tr');
-  row.innerHTML = `
-    <td>${patientId}</td>
-    <td>${testId}</td>
-    <td>${testsTaken}</td>
-    <td>${formattedDate}</td>
-    <td>${price}</td>
-  `;
-
-  // Append the row to the table
-  table.appendChild(row);
-
-  // Add the test's price to the total price
-  totalPrice += price;
-});
-
-// Replace the existing table (if any) with the new table
-testTableContainer.innerHTML = '';
-testTableContainer.appendChild(table);
-
-// Display total price in the div
-const totalPriceDiv = document.getElementById('total-price');
-totalPriceDiv.innerHTML = `Total Tests Revenue: ${totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
+function handleLogoutConfirmation() {
+    const overlay2 = document.getElementById('overlay2');
+    // Perform logout actions here (e.g., using Firebase Auth)
+    auth.signOut()
+        .then(() => {
+            showLoggedOutMessage();
+            closePopup();
+            closeLogoutConfirmationPopup();
+            location.reload();  // Corrected: invoke the function
+        })
+        .catch((error) => {
+            console.error("Error logging out:", error.message);
+        });
 }
 
-// Function to update pagination
-function updatePagination() {
-const totalPages = Math.ceil(testsData.length / testsPerPage);
-const paginationDiv = document.getElementById('pagination');
-paginationDiv.innerHTML = '';
 
-// Create previous button
-const prevButton = document.createElement('button');
-prevButton.textContent = 'Previous';
-prevButton.addEventListener('click', () => {
-  if (currentPage > 1) {
-    currentPage--;
-    fetchAndDisplayTestsWithPagination();
-  }
-});
+// Function to close the logout confirmation popup
+function closeLogoutConfirmationPopup() {
+    const confirmationPopup = document.getElementById('confirmationPopup');
+    const overlay = document.getElementById('overlay3');
 
-// Create next button
-const nextButton = document.createElement('button');
-nextButton.textContent = 'Next';
-nextButton.addEventListener('click', () => {
-  if (currentPage < totalPages) {
-    currentPage++;
-    fetchAndDisplayTestsWithPagination();
-  }
-});
+    // Close the confirmation popup
+    confirmationPopup.style.display = 'none';
+    overlay.style.display = 'none';
 
-// Display current page and total pages
-const pageInfo = document.createElement('span');
-pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    // Remove event listeners to prevent memory leaks
+    const yesButton = document.getElementById('confirmYesBtn');
+    const noButton = document.getElementById('confirmNoBtn');
 
-// Append the buttons and page info to the pagination div
-paginationDiv.appendChild(prevButton);
-paginationDiv.appendChild(pageInfo);
-paginationDiv.appendChild(nextButton);
+    yesButton.removeEventListener('click', handleLogoutConfirmation);
+    noButton.removeEventListener('click', closeLogoutConfirmationPopup);
 }
 
-// Function to fetch and display the testsTaken data in a table with retry mechanism
-function fetchAndDisplayTestsWithRetry(maxRetries, retryDelay) {
-let retries = 0;
-
-function fetchTests() {
-  retries++;
-
-  const patientsRef = ref(database, 'patients');
-
-  get(patientsRef)
-    .then((snapshot) => {
-      const patientsData = snapshot.val();
-
-      if (patientsData) {
-        // Extract and format tests data here
-        const extractedTests = extractTestsData(patientsData);
-        
-        // Set testsData to the extracted tests data
-        testsData = extractedTests;
-
-        // Update pagination and display data
-        currentPage = 1;
-        fetchAndDisplayTestsWithPagination();
-        updatePagination();
-      } else {
-        // Handle the case when there are no patients
-        showMessage('No patients data found.');
-      }
-    })
-    .catch((error) => {
-      console.error('Error fetching patients data:', error);
-
-      if (retries < maxRetries) {
-        setTimeout(fetchTests, retryDelay);
-      } else {
-        console.error('Exceeded maximum retries. Unable to display tests.');
-      }
-    });
-}
-
-fetchTests();
-}
-
-// Extract and format tests data
-function extractTestsData(patientsData) {
-const extractedTests = [];
-
-for (const patientId in patientsData) {
-  const patient = patientsData[patientId];
-
-  if (patient.hasOwnProperty('testsTaken')) {
-    const testsTaken = patient.testsTaken;
-
-    for (const testId in testsTaken) {
-      const testData = testsTaken[testId];
-      const testsTakenValue = testData.testsTaken;
-      const dateTakenValue = new Date(testData.dateTaken); // Convert to Date object
-      const priceValue = testData.price;
-
-      extractedTests.push({
-        patientId,
-        testId,
-        testsTaken: testsTakenValue,
-        dateTaken: dateTakenValue,
-        price: priceValue,
-      });
-    }
-  }
-}
-
-return extractedTests;
-}
-
-// Call the function with maximum retries of 3 and a retry delay of 1000 milliseconds (1 second)
-fetchAndDisplayTestsWithRetry(10, 1000);
+// ...
 
 
+// Function to show the "Added to Cart" message
+function showLoggedOutMessage() {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `User Logged out!`;
+  messageContainer.style.display = "block";
 
-
-
-
-displayMessage('Signing in...', 'Please wait...', false); // Pass false for error message
-
-// Add event listener to all links within the website
-document.addEventListener('click', function(event) {
-  const target = event.target;
-
-  // Check if the clicked element is a link within the website
-  if (target.tagName === 'A' && target.href.startsWith(window.location.origin)) {
-    // Store the clicked link's URL in local storage
-    localStorage.setItem('clickedLink', target.href);
-  }
-});
-
-// Get the "Log Out" button element
-const logoutButton = document.getElementById("logoutButton");
-
-// Add event listener to the "Log Out" button
-logoutButton.addEventListener("click", function(event) {
-  event.preventDefault();
-
-  // Store the current page URL in local storage
-  localStorage.setItem('logoutPage', window.location.href);
-
-  // Store the clicked link's URL in local storage
-  const clickedLink = localStorage.getItem('clickedLink');
-  if (clickedLink) {
-    localStorage.setItem('logoutPage', clickedLink);
-  }
-
-  // Display overlay with spinner and text
-  displayOverlay();
-
-  // Simulate logout delay (you can replace this with your actual logout logic)
   setTimeout(() => {
-    // Perform logout
-    logOut();
+    messageContainer.style.display = "none";
+  }, 3000);
+}
 
-    // Hide overlay after logout is complete
-    hideOverlay();
+// Event listener for the "Account" link
+document.getElementById("accountLink").addEventListener("click", async function(event) {
+    event.preventDefault();
+    await showPopupWithUserDetails();
+});
+
+// Event listener for the close button using id
+document.getElementById("closePopupBtn").addEventListener("click", function() {
+    const overlay = document.getElementById('overlay');
+    overlay.style.display = 'none';
+    
+    const popup = document.getElementById('popup');
+    popup.style.display = 'none';
+    popup.classList.remove('fade-in');
+    document.body.classList.remove("no-scroll"); // Enable scrolling
+});
+// Get the checkout button element
+const checkoutBtn = document.getElementById("checkout-btn");
+
+// Add event listener to the checkout button
+checkoutBtn.addEventListener("click", () => {
+  // Collect cart items and their details
+  const cartItems = document.getElementsByClassName("cart-item");
+  const orderSummary = [];
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const productName = cartItem.querySelector(".product-details h5").innerText;
+    const price = parseFloat(cartItem.querySelector(".product-details h4").dataset.price);
+    const quantity = parseInt(cartItem.querySelector(".quantity-input").value);
+    const total = quantity * price; // Calculate total by multiplying quantity with price
+    const isWholesale = cartItem.querySelector(".toggle-switch").checked;
+
+    orderSummary.push({ productName, price, quantity, total, isWholesale });
+  }
+
+  // Get the cart total
+  const cartTotal = orderSummary.reduce((acc, item) => acc + item.total, 0);
+
+  // Create the popup with the order summary and customer details
+  const popupContent = document.createElement("div");
+  popupContent.classList.add("popup-content");
+
+  // Add the title to the popup
+  const title = document.createElement("h4");
+  title.innerText = "Order Summary";
+  popupContent.appendChild(title);
+
+  // Add the order summary to the popup
+  const orderTable = document.createElement("table");
+  orderTable.classList.add("order-table");
+
+  // Create table header
+  const tableHeader = document.createElement("tr");
+  tableHeader.innerHTML = `
+    <th>Product</th>
+    <th>Price</th>
+    <th>Qty</th>
+    <th>Total</th>
+    <th>Wholesale</th>
+  `;
+  orderTable.appendChild(tableHeader);
+
+  // Iterate over the order summary and create table rows
+  for (let i = 0; i < orderSummary.length; i++) {
+    const { productName, price, quantity, total, isWholesale } = orderSummary[i];
+    const tableRow = document.createElement("tr");
+    tableRow.innerHTML = `
+      <td>${productName}</td>
+      <td>UGX ${price}</td>
+      <td>${quantity}</td>
+      <td>UGX ${total.toFixed(2)}</td>
+      <td>${isWholesale ? "Yes" : "No"}</td>
+    `;
+    orderTable.appendChild(tableRow);
+  }
+
+  // Append the table to the popup content
+  popupContent.appendChild(orderTable);
+
+  // Add the cart total to the popup
+  const totalElement = document.createElement("h4");
+  totalElement.innerText = `Total: UGX ${cartTotal.toFixed(2)}`;
+  totalElement.style.fontSize = "18px";
+  totalElement.style.marginTop = "10px";
+  totalElement.style.color = "#333";
+  popupContent.appendChild(totalElement);
+
+
+// Create the popup container
+const popupContainer = document.createElement("div");
+popupContainer.classList.add("popup-container");
+
+
+// Add the popup content to the container
+popupContainer.appendChild(popupContent);
+
+
+  // Add the popup container to the document body
+  document.body.appendChild(popupContainer);
+
+
+  
+// Create the close button
+const closeButton = document.createElement("button");
+closeButton.classList.add("close-button");
+closeButton.innerHTML = "&times; Close";
+
+// Add event listener to close the popup when the close button is clicked
+closeButton.addEventListener("click", () => {
+  popupContainer.style.display = "none";
+});
+
+
+
+// Append the close button to the popup container
+popupContainer.appendChild(closeButton);
+// Create the order type section
+/*
+const orderTypeSection = document.createElement("div");
+orderTypeSection.classList.add("order-type");
+
+// Create the title for the order type
+const orderTypeTitle = document.createElement("h4");
+orderTypeTitle.innerText = "Order Type";
+orderTypeSection.appendChild(orderTypeTitle);
+
+// Declare selectedOrderType outside the function scope
+let selectedOrderType;
+
+// Function to create order option with note
+function createOrderOption(id, value, label, note) {
+  const orderOption = document.createElement("div");
+  orderOption.classList.add("order-option");
+
+  // Create radio input
+  const radioInput = document.createElement("input");
+  radioInput.type = "radio";
+  radioInput.name = "order-type";
+  radioInput.id = id;
+  radioInput.value = value;
+
+  // Create label for radio input
+  const labelElement = document.createElement("label");
+  labelElement.for = id;
+  labelElement.innerText = label;
+
+  // Create note element
+  const noteElement = document.createElement("p");
+  noteElement.classList.add("order-note");
+  noteElement.innerText = note;
+
+  // Append elements to order option
+  orderOption.appendChild(radioInput);
+  orderOption.appendChild(labelElement);
+  orderOption.appendChild(noteElement);
+
+  // Append order option to order type section
+  orderTypeSection.appendChild(orderOption);
+
+  // Add event listener to show/hide notes
+  radioInput.addEventListener("change", () => {
+    // Set the selected order type
+    selectedOrderType = radioInput.value;
+
+    // Hide all notes
+    document.querySelectorAll(".order-note").forEach((note) => {
+      note.style.display = "none";
+    });
+
+    // Show the selected note
+    noteElement.style.display = "block";
+  });
+}
+
+// Create retail order option with note
+//createOrderOption("retail-order", "retail", "Retail Order", "Prices remain the same for all products.");
+
+// Create wholesale order option with note
+//createOrderOption("wholesale-order", "wholesale", "Wholesale Order", "Wholesale orders have special discounts and require a minimum order quantity.");
+
+// Append the order type section to the document or another container
+//popupContent.appendChild(orderTypeSection);
+*/
+// Create the customer details section
+const customerDetails = document.createElement("div");
+customerDetails.classList.add("customer-details");
+// Create the payment options section
+const paymentOptionsSection = document.createElement("div");
+paymentOptionsSection.classList.add("payment-options");
+
+// Create the title for the payment options
+const paymentOptionsTitle = document.createElement("h4");
+paymentOptionsTitle.innerText = "Payment Options";
+paymentOptionsSection.appendChild(paymentOptionsTitle);
+
+// Create a small note under the payment options title
+const paymentOptionsNote = document.createElement("p");
+paymentOptionsNote.innerText = "Click your desired payment type to reveal and copy Account Number for your goods Payment. Ensure that your selection is the one that you are going to use to pay to enable us track your payment.";
+paymentOptionsNote.classList.add("payment-options-note"); // Add the desired class
+paymentOptionsSection.appendChild(paymentOptionsNote);
+
+// Create the payment options
+const paymentOptions = ["Airtel Money", "Mobile Money", "Bank Transfer"];
+
+paymentOptions.forEach((option) => {
+  // Create a container for each payment option
+  const paymentOptionContainer = document.createElement("div");
+  paymentOptionContainer.classList.add("payment-option-container");
+
+  // Create the payment option div
+  const paymentOption = document.createElement("div");
+  paymentOption.classList.add("payment-option");
+  paymentOption.innerHTML = `
+    <input type="radio" name="payment-option" id="${option.toLowerCase()}" value="${option.toLowerCase()}">
+    <label for="${option.toLowerCase()}">${option}</label>
+  `;
+
+  // Create a div for details (copy icon and "Copy" word)
+  const detailsSection = document.createElement("div");
+  detailsSection.classList.add("details-section");
+
+  // Create a copy icon
+  const copyIcon = document.createElement("i");
+  copyIcon.classList.add("fas", "fa-copy", "copy-icon");
+  detailsSection.appendChild(copyIcon);
+
+  // Create a "Copy" word
+  const copyWord = document.createElement("span");
+  copyWord.innerText = "Copy";
+  detailsSection.appendChild(copyWord);
+
+  // Append details section to payment option
+  paymentOption.appendChild(detailsSection);
+
+ // Add event listener to copy the details to clipboard when the option is selected
+paymentOption.addEventListener("click", () => {
+  // Assuming the merchant code is the second line in the details
+  const merchantCode = receiverDetails[option.toLowerCase()].split("\n")[1].split(": ")[1];
+
+  // Copy the merchant code to the clipboard
+  copyToClipboard(merchantCode);
+
+  // Create a message element
+  const message = document.createElement("div");
+  message.className = "copied-message";
+  message.textContent = "Copied to clipboard";
+
+  // Append the message element to the body
+  document.body.appendChild(message);
+
+  // Trigger the slide-in effect
+  setTimeout(() => {
+    message.classList.add("show");
+  }, 100); // Adjust the delay to match the CSS transition duration
+
+  // Reset the copied status and remove the message after a short delay (e.g., 2 seconds)
+  setTimeout(() => {
+    message.classList.remove("show");
+    setTimeout(() => {
+      document.body.removeChild(message);
+    }, 500); // Adjust the delay to match the CSS transition duration
   }, 2000);
 });
 
-function displayOverlay() {
-  // Create spinner element
-  const spinner = document.createElement('div');
-  spinner.id = 'loadingSpinner';
-  overlay.appendChild(spinner);
+  // Append the payment option to the container
+  paymentOptionContainer.appendChild(paymentOption);
 
-  // Create "Logging Out" text element
-  const loggingOutText = document.createElement('div');
-  loggingOutText.id = 'loggingOutText';
-  loggingOutText.textContent = 'Logging Out...';
-  overlay.appendChild(loggingOutText);
+  // Append the payment option container to the payment options section
+  paymentOptionsSection.appendChild(paymentOptionContainer);
+});
 
-  // Display overlay
-  overlay.style.display = 'flex';
+// Append the payment options section to the popup content
+popupContent.appendChild(paymentOptionsSection);
+// Function to copy text to clipboard
+function copyToClipboard(text) {
+  const tempInput = document.createElement("textarea");
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand("copy");
+  document.body.removeChild(tempInput);
+}
+// Get the receiver/account details section
+const receiverDetailsSection = document.createElement("div");
+receiverDetailsSection.classList.add("receiver-details");
+
+// Define the receiver/account details for each payment option
+const receiverDetails = {
+  "airtel money": "Receiver: Nsereko Gerald\nAirtel Number: 0753 754 254",
+   "mobile money": "Receiver: Nsereko Gerald\nMTN Number: 0782 754 254",
+  "bank transfer": "Centenary Bank: Nsereko Gerald\nAccount Number: 3200531896",
+};
+
+// Function to update the receiver/account details based on the selected payment option
+function updateReceiverDetails() {
+  // Clear the previous receiver/account details
+  receiverDetailsSection.innerHTML = "";
+
+  // Get the selected payment option
+  const selectedOption = document.querySelector('input[name="payment-option"]:checked').value;
+
+  // Create the details element
+  const details = document.createElement("p");
+  details.innerText = receiverDetails[selectedOption];
+
+  // Append the details element to the receiver/account details section
+  receiverDetailsSection.appendChild(details);
 }
 
-function hideOverlay() {
-  // Remove spinner and text elements from overlay
-  const spinner = document.getElementById('loadingSpinner');
-  const loggingOutText = document.getElementById('loggingOutText');
-  overlay.removeChild(spinner);
-  overlay.removeChild(loggingOutText);
+// Add event listener to each payment option radio button
+const paymentOptionRadios = document.querySelectorAll('input[name="payment-option"]');
+paymentOptionRadios.forEach((radio) => {
+  radio.addEventListener("change", updateReceiverDetails);
+});
 
-  // Hide overlay
-  overlay.style.display = 'none';
-}
+// Append the receiver/account details section to the payment options section
+paymentOptionsSection.appendChild(receiverDetailsSection);
+
+// Add the title to the popup
+const head = document.createElement("h4");
+head.innerText = "Delivery details.";
+popupContent.appendChild(head);
+
+// Add note about transport and delivery costs
+const note = document.createElement("p");
+note.innerText = "Please note that transport and delivery costs are on the side of the customer.";
+note.classList.add("order-note2");
+popupContent.appendChild(note);
+
+// Create a select element for means of transport
+const transportSelect = document.createElement("select");
+transportSelect.classList.add("input-field");
+
+// Create options for the select element
+const option1 = document.createElement("option");
+option1.value = "taxi";
+option1.text = "Taxi";
+transportSelect.appendChild(option1);
+
+const option2 = document.createElement("option");
+option2.value = "boda boda";
+option2.text = "Boda boda";
+transportSelect.appendChild(option2);
+
+const option3 = document.createElement("option");
+option3.value = "bus";
+option3.text = "Bus";
+transportSelect.appendChild(option3);
+
+const option4 = document.createElement("option");
+option4.value = "foot";
+option4.text = "Foot";
+transportSelect.appendChild(option4);
 
 
-// Function to log out
-function logOut() {
-  auth.signOut()
-    .then(function() {
-      // Clear the login token and other stored values
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('tokenExpiryTime');
-      localStorage.removeItem('clickedLink');
+// Set the placeholder for the select element
+const defaultOption = document.createElement("option");
+defaultOption.value = "";
+defaultOption.text = "Select Means of Transport";
+defaultOption.disabled = true;
+defaultOption.selected = true;
+transportSelect.appendChild(defaultOption);
 
-      // Redirect to the stored page URL (either clicked link or current page)
-      const logoutPage = localStorage.getItem('logoutPage') || 'login.html';
-      window.location.href = logoutPage;
-    })
-    .catch(function(error) {
-      console.error('Error signing out:', error);
+// Set the required attribute for the select element
+transportSelect.required = true;
+
+// Append the select element to customerDetails
+customerDetails.appendChild(transportSelect);
+
+// Append customerDetails to popupContent
+popupContent.appendChild(customerDetails);
+
+// Create input for delivery place
+const deliveryPlaceInput = document.createElement("input");
+deliveryPlaceInput.type = "text";
+deliveryPlaceInput.placeholder = "Delivery Place";
+deliveryPlaceInput.classList.add("input-field");
+deliveryPlaceInput.required = true; // Set the required attribute
+customerDetails.appendChild(deliveryPlaceInput);
+
+
+
+
+
+// Append the customer details to the popup content
+popupContent.appendChild(customerDetails);
+
+// Create input for telephone contact
+const telephoneInput = document.createElement("input");
+telephoneInput.type = "tel";
+telephoneInput.placeholder = "Telephone Contact";
+telephoneInput.classList.add("input-field");
+telephoneInput.required = true; // Set the required attribute
+customerDetails.appendChild(telephoneInput);
+
+// Append the telephone input to the customer details
+customerDetails.appendChild(telephoneInput);
+
+// Create the order button
+const orderButton = document.createElement("button");
+orderButton.innerText = "Place Order";
+orderButton.classList.add("order-button");
+orderButton.style.backgroundColor = "#3f51b5";
+orderButton.style.width = "fit-content";
+orderButton.style.color = "#fff";
+orderButton.style.padding = "10px 20px";
+orderButton.style.border = "none";
+orderButton.style.borderRadius = "4px";
+orderButton.style.fontSize = "16px";
+orderButton.style.marginTop = "20px";
+
+// Now you can use selectedOrderType globally in your code
+
+
+
+popupContent.appendChild(orderButton);
+
+function showNotLoggedInMessage() {
+    const messageContainer = document.getElementById('messageContainer');
+    const messageContent = document.getElementById('messageContent');
+    const overlay = document.getElementById('overlay2'); // Add this line
+
+    // Set the message content HTML, including the company logo and login button
+    messageContent.innerHTML = `
+        <div id="companyLogo" class="company-logo">
+            <img src="img/Devine Phones.png" alt="Company Logo">
+        </div>
+        <p>You are not signed in. Please sign in to access your account and shop with us. Thank you!</p>
+        <button id="loginButton" class="login-button">
+            <i class="fa fa-sign-in"></i> Login
+        </button>
+    `;
+
+    // Add the "fade-in" class to apply the fade-in animation
+    messageContainer.classList.add('fade-in');
+    messageContainer.style.display = 'flex'; // Make the message container visible
+    overlay.style.display = 'block'; // Show the overlay
+
+    // Add a click event listener to the login button
+    const loginButton = document.getElementById('loginButton');
+    loginButton.addEventListener('click', function() {
+        window.location.href = 'login.html'; // Adjust the login page URL
     });
 }
 
 
 
-const form = document.querySelector('.popup-form');
-const submitButton = document.querySelector('.popup-form button');
-const successMessage = document.createElement('p');
-successMessage.textContent = 'Medicine details uploaded successfully!';
-successMessage.style.color = 'green';
-const errorMessage = document.createElement('p');
-errorMessage.textContent = 'Error uploading patient details. Please try again.';
-errorMessage.style.color = 'red';
-const patientsContainer = document.getElementById('patients');
-let patients = []; // Declare patients variable outside the event listener
 
-
-
-
-function renderPatients(patients) {
-
-}
-patientsContainer.innerHTML = '';
-
-
-const salesContainer = document.getElementById('salesContainer');
-// Add these lines at the beginning of your JavaScript file to get references to the filter elements
-const startDateInput = document.getElementById('start-date');
-const endDateInput = document.getElementById('end-date');
-const filterButton = document.getElementById('filter-button');
-
-// Declare the salesChart and salesTrendChart variables outside the renderSalesTable function
-let salesChart;
-let salesTrendChart;
-// Function to render the sales table and sales trend chart
-function renderSalesTable(sales, salesByDate) {
-
-// Sort the sales array by date and time in descending order
-sales.sort((a, b) => {
-const dateA = new Date(`${a.saleData.date} ${a.saleData.time}`);
-const dateB = new Date(`${b.saleData.date} ${b.saleData.time}`);
-return dateB - dateA;
-});
-
-// Add an event listener to the filter button
-filterButton.addEventListener('click', applyDateFilter);
-
-// Function to filter the sales data by date
-function applyDateFilter() {
-const startDate = new Date(startDateInput.value);
-let endDate = new Date(endDateInput.value);
-
-// Adjust the end date to the end of the day
-endDate.setHours(23, 59, 59, 999);
-
-// Fetch the original sales data (before sorting by date)
-const originalSales = [...sales];
-
-// Filter the sales data based on the date range
-const filteredSales = originalSales.filter((sale) => {
-  const [month, day, year] = sale.saleData.date.split('/').map(Number);
-  const saleDate = new Date(year, month - 1, day, 0, 0, 0, 0); // Start of the day
-
-  return saleDate >= startDate && saleDate <= endDate;
-});
-
-
-// Render the filtered sales table
-showMessage('Filter Complete');
-renderSalesTable(filteredSales);
-}
-
-
-// Get a reference to the "Clear Filter" button
-const clearFilterButton = document.getElementById('clear-filter-button');
-
-function clearDateFilter() {
-startDateInput.value = ''; // Reset the start date input
-endDateInput.value = ''; // Reset the end date input
-
-// Render the table with the original sales data
-renderSalesTable(originalSales);
-}
-
-// Add an event listener to the "Clear Filter" button
-clearFilterButton.addEventListener('click', searchByMedicine);
-
-// Create a table element
-const table = document.createElement('table');
-table.classList.add('sales-table');
-
-// Create the table header row
-const headerRow = document.createElement('tr');
-headerRow.innerHTML = `
-  <th>Medicine</th>
-  <th>Quantity</th>
-  <th>Price (Ug.sh)</th>
-  <th>Date</th>
-  <th>Time</th>
-  <th>Action</th>
-`;
-table.appendChild(headerRow);
-
-// Object to store the total incomes for each medicine
-const medicineIncomes = {};
-
-// Object to store the total sales for each day
-const salesByDay = {};
-
-
-// Destroy the existing salesChart if it exists
-if (salesChart) {
-  salesChart.destroy();
-}
-
-// Destroy the existing salesTrendChart if it exists
-if (salesTrendChart) {
-  salesTrendChart.destroy();
-}
-
-// Loop through each sale
-sales.forEach(sale => {
-  const patientName = sale.patientName;
-  const saleData = sale.saleData;
-
-  // Create a row element for each sale
-  const row = document.createElement('tr');
-
-  // Create and append the patient name cell
-  const patientNameCell = document.createElement('td');
-  patientNameCell.textContent = patientName;
-  row.appendChild(patientNameCell);
-
-  // Create and append the sale quantity cell
-  const quantityCell = document.createElement('td');
-  quantityCell.textContent = saleData.quantity + ' pcs';
-  row.appendChild(quantityCell);
-
-  // Get the medicine ID from the saleData
-  const medicineId = saleData.medicineId;
-
-  // Create and append the price cell
-  const priceCell = document.createElement('td');
-
-  // Fetch the medicine data from the database
-  const medicineRef = ref(database, `medicine/${patientName}`);
-  get(medicineRef).then((snapshot) => {
-    if (snapshot.exists()) {
-      const medicineData = snapshot.val();
-      const price = medicineData.price;
-      priceCell.textContent = price ? price : 'N/A';
-
-      // Calculate the total income for each medicine
-      const totalIncome = price * saleData.quantity;
-
-      // Aggregate the total income for each medicine
-      if (medicineIncomes[patientName]) {
-        medicineIncomes[patientName] += totalIncome;
-      } else {
-        medicineIncomes[patientName] = totalIncome;
-      }
-// Aggregate the total sales for each day
-const day = saleData.date;
-  if (salesByDay[day]) {
-    salesByDay[day]++;
-  } else {
-    salesByDay[day] = 1;
-  }
-      // Update the chart and total amount
-      updateChart();
-      updateTotalAmount();
-    } else {
-      priceCell.textContent = 'N/A';
+// Function to remove the loader container
+function removeLoaderContainer() {
+    const loaderContainer = document.querySelector(".loader-container");
+    if (loaderContainer) {
+        document.body.removeChild(loaderContainer);
     }
-  }).catch((error) => {
-    console.log('Error fetching medicine data:', error);
-    priceCell.textContent = 'N/A';
-  });
+}
 
-  row.appendChild(priceCell);
+// Function to show the success popup
+function showSuccessPopup() {
+    // Remove the loader container
+    removeLoaderContainer();
 
-  // Create and append the sale date cell
-  const dateCell = document.createElement('td');
-  dateCell.textContent = saleData.date;
-  row.appendChild(dateCell);
+    // Create the success popup
+    const successPopup = document.createElement("div");
+    successPopup.classList.add("success-popup");
 
-  // Create and append the sale time cell
-  const timeCell = document.createElement('td');
-  timeCell.textContent = saleData.time;
-  row.appendChild(timeCell);
+    // Create the success message
+    const successMessage = document.createElement("h3");
+    const successText = document.createElement("p");
+    successText.innerText = "Thank you for shopping with us... You can always find your receipts in your account and use ORDER IDs as reasons for payment. Thank you.";
+    successMessage.innerText = "Order Successful !";
 
-// Create and append the delete button cell
-const deleteCell = document.createElement('td');
-const deleteButton = document.createElement('button');
-deleteButton.classList.add('delete-button');
-deleteButton.innerHTML = '<i class="fa fa-trash"></i>';
+    // Create the okay button
+    const okayButton = document.createElement("button");
+    okayButton.classList.add("okay-button");
+    okayButton.innerText = "Okay";
 
-// Get the sale ID
-const saleId = sale.saleId; // Assuming you have the sale ID available in the sale object
+    // Add event listener to the okay button
+    //okayButton.addEventListener("click", () => {
+    //    location.reload(); // Refresh the page
+   // });
 
-// Add the sale ID as a data attribute to the delete button
-deleteButton.dataset.saleId = saleId;
+    // Append the okay button to the success popup
+    successPopup.appendChild(okayButton);
 
-deleteButton.addEventListener('click', function() {
-// Get the patient name and sale ID from the data attributes
-const patientName = sale.patientName;
-const saleId = this.dataset.saleId;
+    // Add event listener to close the success popup when the okay button is clicked
+    okayButton.addEventListener("click", () => {
+       location.reload()
+        document.body.removeChild(successPopup);
+       // popupContainer.style.display = "none";
+       
+    });
 
-// Call the deleteSale function to delete the sale from Firebase
-deleteSale(patientName, saleId)
-  .then(() => {
-    // Delete successful
-    row.remove();
+    // Append the success message and okay button to the success popup
+    successPopup.appendChild(successMessage);
+    successPopup.appendChild(successText);
+    successPopup.appendChild(okayButton);
 
-    // Update the chart and total amount after deleting a sale
-    updateChart();
-    updateTotalAmount();
-  })
-  .catch(error => {
-    console.log('Error deleting sale:', error);
-  });
-});
+    // Add the success popup to the document body
+    document.body.appendChild(successPopup);
+}
 
+// Function to show the error popup
+function showErrorPopup() {
+    // Remove the loader container
+    removeLoaderContainer();
 
-deleteCell.appendChild(deleteButton);
-row.appendChild(deleteCell);
+    // Create the error popup
+    const errorPopup = document.createElement("div");
+    errorPopup.classList.add("error-popup");
 
+    // Create the error message
+    const errorMessage = document.createElement("h3");
+    errorMessage.innerText = "Oops..., something went wrong! Check your internet connection or else you have missing fields";
 
+    // Create the okay button
+    const okayButton = document.createElement("button");
+    okayButton.classList.add("okay-button");
+    okayButton.innerText = "Okay";
 
+    // Add event listener to the okay button
+    okayButton.addEventListener("click", () => {
+       // location.reload(); // Refresh the page
+       document.body.removeChild(errorPopup);
+       // popupContainer.style.display = "none";
+       
+    });
 
-// Function to delete a sale from Firebase
-function deleteSale(patientName, saleId) {
-console.log('Deleting sale for patient:', patientName);
-console.log('Sale ID:', saleId);
+    // Append the okay button to the error popup
+    errorPopup.appendChild(okayButton);
 
-// Prompt the user for confirmation
-const confirmation = confirm('Are you sure you want to delete this sale?');
+    // Append the error message and okay button to the error popup
+    errorPopup.appendChild(errorMessage);
+    errorPopup.appendChild(okayButton);
 
-if (confirmation) {
-  // Prompt the user for password
-  const password = prompt('Please enter your password to confirm the deletion:');
+    // Add the error popup to the document body
+    document.body.appendChild(errorPopup);
+}
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  cartCountElement.innerText = count;
+}
 
-  // Check if the password is correct
-  if (password === 'mm') { // Replace 'your_password' with the actual password
-    // Create a reference to the specific sale in the patient's sales node
-    const saleRef = ref(database, `medicine/${patientName}/sales/${saleId}`);
+// Define the clearCart function
+function clearCart() {
+  // Remove all items from the cart
+  const cartItems = document.getElementsByClassName("cart-item");
 
-    // Remove the sale node from the database
-    return remove(saleRef)
-      .then(() => {
-        alert('Sale deleted successfully!');
-      })
-      .catch((error) => {
-        console.error('Error deleting sale:', error);
-        alert('Error deleting sale. Please try again.');
-      });
-  } else {
-    alert('Wrong password. Deletion cancelled.');
+  while (cartItems.length > 0) {
+    cartItems[0].remove();
+    
   }
-}
-}
+updateCartCount(0);
+  // Update the total price
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX 0.00";
 
-
-
-
-  // Aggregate the total sales for each day
-  const day = saleData.date;
-  if (salesByDay[day]) {
-    salesByDay[day]++;
-  } else {
-    salesByDay[day] = 1;
-  }
-
-  // Append the row to the table
-  table.appendChild(row);
-  
-});
-
-// Clear the sales container
-salesContainer.innerHTML = '';
-
-// Append the table to the sales container
-// salesContainer.appendChild(table);
-
-
-// Create and update the chart
-const chartCanvas = document.getElementById('salesChart');
-if (chartCanvas) {
-updateChart();
+  // Update any other necessary cart-related logic
 }
 
-// Create and update the sales trend chart
-const trendChartCanvas = document.getElementById('salesTrendChart');
-if (trendChartCanvas) {
-updateSalesTrendChart();
-}
+// Rest of your code...
 
-function updateChart() {
-// Destroy the existing chart if it exists
-if (salesChart) {
-  salesChart.destroy();
-}
+// Add event listener to the order button
+orderButton.addEventListener("click", async () => {
+    // Display loader while processing the order
+    const loader = document.createElement("div");
+    loader.classList.add("loader");
+    popupContainer.appendChild(loader);
 
-const medicineNames = Object.keys(medicineIncomes);
-const totalIncomes = Object.values(medicineIncomes);
-
-// Sort the medicines based on their incomes in descending order
-const sortedMedicines = medicineNames
-  .map((name, index) => ({ name, income: totalIncomes[index] }))
-  .sort((a, b) => b.income - a.income);
-
-// Get the top 5 selling medicines
-const topSellingMedicines = sortedMedicines.slice(0, 5);
-
-const chartData = {
-  labels: medicineNames, // Use all medicine names for the chart labels
-  datasets: [
-    {
-      label: 'Estimated Income (UGX)',
-      data: totalIncomes, // Use all medicine incomes for the chart data
-      backgroundColor: 'rgba(75, 192, 192, 0.5)',
-      borderColor: 'rgba(75, 192, 192, 1)',
-      borderWidth: 1,
-    },
-  ],
-};
-
-const chartOptions = {
-  scales: {
-    y: {
-      beginAtZero: true,
-    },
-  },
-};
-
-const ctx = chartCanvas.getContext('2d');
-salesChart = new Chart(ctx, {
-  type: 'bar',
-  data: chartData,
-  options: chartOptions,
-});
-
-// Display the top selling medicines in the topSellingTable element
-const topSellingTable = document.getElementById('topsells');
-topSellingTable.innerHTML = '';
-
-// Create a table element
-const table = document.createElement('table');
-table.classList.add('topsell-table');
-
-// Create the table header row
-const headerRow = document.createElement('tr');
-headerRow.innerHTML = `
-<th>Medicine Name</th>
-<th>Income (UGX)</th>
-`;
-table.appendChild(headerRow);
-
-// Loop through each top selling medicine
-topSellingMedicines.forEach((medicine) => {
-// Create a row element for each medicine
-const row = document.createElement('tr');
-
-// Create the cell for medicine name
-const medicineNameCell = document.createElement('td');
-medicineNameCell.textContent = medicine.name;
-row.appendChild(medicineNameCell);
-
-// Create the cell for medicine income
-const medicineIncomeCell = document.createElement('td');
-medicineIncomeCell.textContent = ` ${medicine.income.toLocaleString('en-US', { style: 'currency', currency: 'UGX' })}`;
-row.appendChild(medicineIncomeCell);
-
-// Append the row to the table
-table.appendChild(row);
-});
-
-// Append the table to the topSellingTable element
-topSellingTable.appendChild(table);
-
-}
-
-function updateSalesTrendChart() {
-// Destroy the existing chart if it exists
-if (salesTrendChart) {
-  salesTrendChart.destroy();
-}
-
-const days = Object.keys(salesByDay).reverse(); // Reverse the array of days
-const salesCount = Object.values(salesByDay).reverse(); // Reverse the array of sales counts
-
-const chartData = {
-  labels: days,
-  datasets: [
-    {
-      label: 'Sales Count by Date',
-      data: salesCount,
-      backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      borderColor: 'rgba(255, 99, 132, 1)',
-      borderWidth: 1,
-    },
-  ],
-};
-
-const chartOptions = {
-  scales: {
-    y: {
-      beginAtZero: true,
-    },
-  },
-};
-
-const ctx = trendChartCanvas.getContext('2d');
-salesTrendChart = new Chart(ctx, {
-  type: 'line',
-  data: chartData,
-  options: chartOptions,
-});
-}
-
-function updateTotalAmount() {
-const totalAmountElement = document.getElementById('totalAmount');
-const totalAmount = Object.values(medicineIncomes).reduce((acc, curr) => acc + curr, 0);
-const formattedAmount = totalAmount.toLocaleString('en');
-totalAmountElement.innerHTML = `<i class="fa fa-money earnings-icon"></i> <span class="earnings-text"><br> UGX ${formattedAmount}.00</span>`;
-}
-
-// Call the function to update the total revenue collected
-updateTotalAmount();
-
-
-let totalSalesCount = 0;
-let previousDaySalesCount = 0;
-
-// Update the sales count in the HTML
-const salesCountElement = document.getElementById('salesCount');
-
-// Iterate over the values in salesByDay and add them to the totalSalesCount
-Object.values(salesByDay).forEach(count => {
-totalSalesCount += count;
-});
-
-// Compare with the previous day's sales count and update arrow direction
-if (previousDaySalesCount > totalSalesCount) {
-// Display arrow up
-const arrowUp = '<span class="arrow-down">&#8595;</span>';
-salesCountElement.innerHTML = totalSalesCount + ' ' + arrowUp;
-} else if (previousDaySalesCount < totalSalesCount) {
-// Display arrow down
-const arrowDown = '<span class="arrow-up">&#8593;</span>';
-salesCountElement.innerHTML = totalSalesCount + ' ' + arrowDown;
-} else {
-// No change, display sales count without arrow
-salesCountElement.innerText = totalSalesCount.toString();
-}
-
-// Set previousDaySalesCount to the current totalSalesCount value
-previousDaySalesCount = totalSalesCount;
-
-}
-
-
-
-// Function to fetch all sales data with retry mechanism
-function fetchAllSalesDataWithRetry(maxRetries, retryDelay) {
-let retries = 0;
-
-function fetchSalesData() {
-  retries++;
-
-  // Show the loader
- // loaderElement.classList.remove('hidden');
-
-  // Clear the sales container
-  salesContainer.innerHTML = '';
-
-  const patientsRef = ref(database, 'medicine');
-
-  // Return a promise for the onValue event to enable retry mechanism
-  return new Promise((resolve, reject) => {
-    onValue(
-      patientsRef,
-      (snapshot) => {
-        const patientsData = snapshot.val();
-        const allSales = [];
-        const salesByDate = {};
-
-        if (patientsData) {
-          const patients = Object.values(patientsData);
-
-          // Loop through all patients and collect sales data
-          patients.forEach((patient) => {
-            if (patient.hasOwnProperty('sales')) {
-              const salesNode = patient.sales;
-
-              for (const saleKey in salesNode) {
-                const saleData = salesNode[saleKey];
-                const saleId = saleKey; // Set the saleId as the key
-
-                const date = new Date(saleData.date); // Convert the date string to Date object
-                const dateString = date.toISOString().split('T')[0]; // Get the date in YYYY-MM-DD format
-
-                // Add the sale data to the allSales array
-                allSales.push({
-                  patientName: patient.name,
-                  saleData: saleData,
-                  saleId: saleId, // Include the saleId property
-                  date: date, // Include the date object
-                  dateString: dateString, // Include the date string
-                });
-
-                // Store the sale data in salesByDate
-                if (!salesByDate[dateString]) {
-                  salesByDate[dateString] = 0;
-                }
-                salesByDate[dateString] += saleData.amount; // Update the sales count for the date
-              }
-            }
-          });
-        }
-
-        // Pass the allSales array and salesByDate object to the renderSalesTable function
-        renderSalesTable(allSales, salesByDate);
-
-        // Hide the loader
-        loaderElement.classList.add('hidden');
-        console.log('Sales data fetched successfully!');
-        resolve(); // Resolve the promise when sales data is fetched
-      },
-      (error) => {
-        console.error('Error fetching sales data:', error);
-
-        if (retries < maxRetries) {
-          console.log(`Retrying in ${retryDelay} milliseconds...`);
-          setTimeout(() => {
-            fetchSalesData().then(resolve); // Retry by calling fetchSalesData again
-          }, retryDelay);
-        } else {
-          console.error('Exceeded maximum retries. Unable to fetch sales data.');
-          reject(); // Reject the promise when retries are exhausted
-        }
-      }
-    );
-  });
-}
-
-// Start the initial fetch attempt
-fetchSalesData().catch(() => {
-  console.log('Initial fetch failed. Retrying...');
-  return fetchSalesData(); // Retry the initial fetch
-});
-}
-
-// Call the function with maximum retries of 3 and a retry delay of 1000 milliseconds (1 second)
-fetchAllSalesDataWithRetry(3, 1000);
-
-// Reference to the 'treatment-patients' node
-const treatmentPatientsRef = ref(database, 'treatment-patients');
-
-// Initialize counts for Admitted and OPD clients
-let admittedPatientsCount = 0;
-let opdClientsCount = 0;
-
-// Listen for changes in the 'treatment-patients' node
-onValue(treatmentPatientsRef, (snapshot) => {
-  snapshot.forEach((childSnapshot) => {
-    // Check the patientStatus of each patient
-    const patientStatus = childSnapshot.child('patientStatus').val();
-
-    if (patientStatus === 'Admitted') {
-      // Count Admitted patients
-      admittedPatientsCount++;
-    } else if (patientStatus === 'OPD Client') {
-      // Count OPD clients
-      opdClientsCount++;
+    // Check if the user is authenticated
+    const user = auth.currentUser;
+    if (!user) {
+        // User is not authenticated, show the not logged in message
+        showNotLoggedInMessage();
+        return; // Stop further execution
     }
-  });
 
-  // Update the counts in your HTML
-  const admittedPatientsCountElement = document.getElementById('admittedPatientsCount');
-  const opdClientsCountElement = document.getElementById('opdClientsCount');
+    // Get the UID of the logged-in user
+    const userId = user.uid;
+    const userEmail = user.email;
+// Get the delivery place from the input field
+const deliveryPlace = deliveryPlaceInput.value;
 
-  // Add console.log statements for debugging
-  console.log('Admitted Patients Count:', admittedPatientsCount);
-  console.log('OPD Clients Count:', opdClientsCount);
+// Get the selected means of transport
+const meansOfTransport = transportSelect.value;
 
-  // Update the HTML elements
-  if (admittedPatientsCountElement) {
-    admittedPatientsCountElement.textContent = admittedPatientsCount;
-  } else {
-    console.error("Element with ID 'admittedPatientsCount' not found.");
-  }
 
-  if (opdClientsCountElement) {
-    opdClientsCountElement.textContent = opdClientsCount;
-  } else {
-    console.error("Element with ID 'opdClientsCount' not found.");
+// Get the selected payment option
+const selectedPaymentOptionElement = document.querySelector('input[name="payment-option"]:checked');
+if (!selectedPaymentOptionElement) {
+    // Payment option not selected, show an error message
+    showErrorPopup("Please select a payment option");
+    return;
+}
+const selectedPaymentOption = selectedPaymentOptionElement.value;
+
+
+// Initialize orderSummary as an array
+const orderSummary = [];
+
+// Iterate over the table rows and create table cells
+const rows = orderTable.querySelectorAll("tr");
+rows.forEach((row, index) => {
+  if (index > 0) { // Skip the header row
+    const columns = row.querySelectorAll("td");
+
+    // Assuming the order of columns is Product, Price, Qty, Total, Wholesale
+    const productName = columns[0].innerText;
+    const price = parseFloat(columns[1].innerText.replace("UGX ", ""));
+    const quantity = parseInt(columns[2].innerText, 10);
+    const total = parseFloat(columns[3].innerText.replace("UGX ", ""));
+    const isWholesale = columns[4].innerText.toLowerCase() === "yes";
+
+    // Push product details to orderSummary array
+    orderSummary.push({
+      productName,
+      price,
+      quantity,
+      total,
+      isWholesale,
+    });
   }
 });
 
-// Function to search sales by medicine
-function searchByMedicine() {
-const medicineInput = document.getElementById('medicineInput');
-const medicineKeyword = medicineInput.value.toLowerCase();
 
-// Function to filter patients based on the search term
-function filterPatients(patients, searchTerm) {
-const filteredPatients = patients.filter((patient) => {
-  const patientName = patient.name.toLowerCase();
-  return patientName.includes(searchTerm.toLowerCase());
-});
-renderPatients(filteredPatients);
+
+// Get the cart total from the displayed element (assuming it's already calculated and displayed)
+const cartTotalElement = document.getElementById("total-price");
+const cartTotal = parseFloat(cartTotalElement.innerText.replace("TOTAL: UGX ", ""));
+
+// Rest of your code...
+      
+// Create the loader container
+const loaderContainer = document.createElement("div");
+loaderContainer.classList.add("loader-container");
+
+// Append the loader to the loader container
+loaderContainer.appendChild(loader);
+
+// Add the loader container to the document body
+document.body.appendChild(loaderContainer);
+
+// Push the order details to Firebase database
+const orderRef = ref(database, "orders");
+const newOrderRef = push(orderRef);
+
+// Get the telephone number from the input field
+const telephoneNumber = telephoneInput.value;
+
+// Get the selected order type
+const selectedOrderType = document.querySelector('input[name="order-type"]:checked');
+
+// Validate required fields, including the order type
+if (!deliveryPlace || !meansOfTransport || !telephoneNumber) {
+    // Show an error message if any required field is empty or if the order type is not selected
+    showErrorPopup("Please fill in all required fields and select an order type");
+    document.body.removeChild(loaderContainer); // Remove the loader container
+    return;
 }
 
-// Add event listener to search input for live search
-medicineInput.addEventListener('input', () => {
-const searchTerm = medicineInput.value.trim(); // Get the search term
-const patientsRef = ref(database, 'medicine');
-onValue(patientsRef, (snapshot) => {
-  const patientsData = snapshot.val();
-  const patients = patientsData ? Object.values(patientsData) : [];
-  filterPatients(patients, searchTerm);
-});
-});
-// Show the loader
-loaderElement.classList.remove('hidden');
+// If you need the value of the selected order type, you can access it using selectedOrderType.value
+//const orderTypeValue = selectedOrderType.value;
 
-// Clear the sales container
-salesContainer.innerHTML = '';
+// Function to generate a random alphanumeric string
+function generateRandomOrderId(length) {
+    const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let result = '';
 
-// Search through Firebase for patient names by key
-const patientsRef = ref(database, 'medicine');
-onValue(patientsRef, (snapshot) => {
-  const patientsData = snapshot.val();
-  const searchResults = [];
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters.charAt(randomIndex);
+    }
 
-  if (patientsData) {
-    const patients = Object.values(patientsData);
+    return result;
+}
 
-    // Filter patients based on the search term
-    patients.forEach(patient => {
-      const medicineMatch = patient.name.toLowerCase().includes(medicineKeyword);
+// Generate a random order ID
+const randomOrderId = generateRandomOrderId(10);
 
-      // Check if the patient has sales data
-      if (patient.hasOwnProperty('sales')) {
-        const salesNode = patient.sales;
+// Create the order data object with the random order ID
+const orderData = {
+    orderId: randomOrderId,
+    orderDate: new Date().toLocaleDateString(),
+    orderTime: new Date().toLocaleTimeString(),
+    deliveryPlace,
+    meansOfTransport,
+    selectedPaymentOption,
+    //selectedOrderType: orderTypeValue, // Add the selected order type
+    orderSummary,
+    cartTotal,
+    userId, // Add the UID of the user
+    userEmail, // Add the email of the user (if needed)
+    telephoneNumber, // Add the telephone number
+};
 
-        // Loop through each sale in the sales node
-        for (const saleKey in salesNode) {
-          const saleData = salesNode[saleKey];
+// Save the order data
+set(newOrderRef, orderData)
+    .then(() => {
+        // Order placed successfully
+        // Save the receipt in the customer's account
 
-          if (medicineKeyword === '' || medicineMatch) {
-            searchResults.push({
-              patientName: patient.name,
-              saleData: saleData
+        // Create a new reference to the customer's receipt in the "receipts" node
+        const userReceiptRef = ref(database, `users/${userId}/receipts`);
+        const newUserReceiptRef = push(userReceiptRef);
+
+        // Save the receipt data under the user's account
+        const receiptData = {
+            orderId: randomOrderId,
+            orderDate: orderData.orderDate,
+            orderTime: orderData.orderTime,
+            deliveryPlace: orderData.deliveryPlace,
+            meansOfTransport: orderData.meansOfTransport,
+            selectedPaymentOption: orderData.selectedPaymentOption,
+            //selectedOrderType: orderData.selectedOrderType, // Add the selected order type
+            orderSummary: orderData.orderSummary,
+            cartTotal: orderData.cartTotal,
+            userId: userId, // Add the UID of the user
+            userEmail: user.email, // Add the email of the user (if needed)
+            // Add other user-related details as needed
+        };
+
+        // Save the receipt data
+        set(newUserReceiptRef, receiptData)
+            .then(() => {
+                // Receipt saved successfully
+                showSuccessPopup();
+                clearCart();
+            })
+            .catch((error) => {
+                console.error("Error saving receipt:", error.message);
+                showErrorPopup();
+            })
+            .finally(() => {
+                // Remove the loader container
+                document.body.removeChild(loaderContainer);
             });
-          }
-        }
-      }
+    })
+    .catch((error) => {
+        console.error("Error placing order:", error.message);
+        showErrorPopup();
+        document.body.removeChild(loaderContainer); // Remove the loader container in case of an error
     });
+
+// Simulating the booking process
+// Note: This setTimeout should be removed in the actual implementation
+setTimeout(() => {
+    // Simulate successful booking
+    showSuccessPopup();
+
+    // Simulate failed booking
+    // showErrorPopup();
+}, 2000);
+
+
+
+});
+
+
+});
+
+});
+
+
+
+
+// Event listener for the "View Purchase History" button
+document.getElementById("viewPurchaseHistoryBtn").addEventListener("click", async function(event) {
+  event.preventDefault();
+
+  
+  // Get the button and spinner elements
+  const viewHistoryBtn = document.getElementById("viewPurchaseHistoryBtn");
+  const spinner = document.getElementById("spinner2"); // Add an ID to your spinner element
+
+  // Disable the button and show the spinner
+  viewHistoryBtn.disabled = true;
+  spinner.style.display = "block";
+
+
+  // Check if the user is authenticated
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('User not authenticated');
+    // You may want to redirect the user to the login page or handle the lack of authentication
+    return;
   }
 
-  // Hide the loader
-  loaderElement.classList.add('hidden');
+  // Fetch the user's UID
+  const userId = user.uid;
 
-  // Display search results
-  if (searchResults.length > 0) {
-    renderSalesTable(searchResults);
-  } else {
-    salesContainer.innerHTML = '<p class="no-results">Oops... No sales found.</p>';
+  // Fetch the user's receipts from Firebase
+  const userReceiptsRef = ref(database, `users/${userId}/receipts`);
+  
+  try {
+    const userReceiptsSnapshot = await get(userReceiptsRef);
+
+    if (userReceiptsSnapshot.exists()) {
+      // User has receipts
+      const userReceipts = userReceiptsSnapshot.val();
+
+      // Display receipts in a popup
+      displayReceiptsPopup(userReceipts);
+    } else {
+      // No receipts found
+      showNoPurchaseMessage()
+      // You can display a message to the user indicating no purchase history.
+    }
+  } catch (error) {
+    console.error('Error fetching user receipts from Firebase:', error.message);
+  }
+  finally {
+    // Enable the button and hide the spinner after loading
+    viewHistoryBtn.disabled = false;
+    spinner.style.display = "none";
   }
 });
+// Function to show the "Added to Cart" message
+function showNoPurchaseMessage() {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `No purchase history found!`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
 }
 
-// Get a reference to the medicine input element
-const medicineInput = document.getElementById('medicineInput');
+// Function to display receipts in a popup
+function displayReceiptsPopup(userReceipts) {
+  // Create the popup container
+  const popupContainer = document.createElement("div");
+  popupContainer.classList.add("popup-container");
 
-// Add event listener to medicine input for live search
-medicineInput.addEventListener('input', searchByMedicine);
-// Add event listener to search medicine button
-const searchMedicineButton = document.getElementById('searchMedicineButton');
-searchMedicineButton.addEventListener('click', searchByMedicine);
+  // Create the close button for the popup
+  const closeButton = document.createElement("button");
+  closeButton.innerText = "Close";
+  closeButton.classList.add("close-button");
 
-// Fetch all sales data on page load
-window.addEventListener('load', fetchAllSalesDataWithRetry);
+// Add event listener to close the popup when the close button is clicked
+closeButton.addEventListener("click", () => {
+  // Apply a class for the fade-out animation
+  popupContainer.style.animation = "fadeOut 0.5s";
+  // Remove the popup container after the animation duration
+  setTimeout(() => {
+    document.body.removeChild(popupContainer);
+  }, 500); // 500 milliseconds (0.5 seconds) should match your animation duration
+});
+// Create the receipt details container
+const receiptDetailsContainer = document.createElement("div");
+receiptDetailsContainer.classList.add("receipt-details-container");
+
+// Create filter by date input
+const dateFilterLabel = document.createElement("label");
+dateFilterLabel.innerText = "Filter by Date";
+const dateFilterInput = document.createElement("input");
+dateFilterInput.type = "date";
+dateFilterInput.placeholder = "Filter by Date";
+dateFilterInput.addEventListener("input", handleDateFilter);
+
+// Create clear button for the date input
+const clearDateButton = document.createElement("button");
+clearDateButton.innerText = "Clear";
+clearDateButton.classList.add("clear-button");
+clearDateButton.addEventListener("click", clearDateFilter);
+
+// Create search by order ID input
+const orderIdSearchLabel = document.createElement("label");
+orderIdSearchLabel.innerText = "Search by Order ID";
+const orderIdSearchInput = document.createElement("input");
+orderIdSearchInput.type = "text";
+orderIdSearchInput.placeholder = "Search by Order ID";
+orderIdSearchInput.addEventListener("input", handleOrderIdSearch);
+
+// Append labels and inputs to the filter container
+const filterContainer = document.createElement("div");
+filterContainer.classList.add("filter-container");
 
 
-const loaderElement = document.getElementById('loader');
 
-// Retrieve and render patients
-const patientsRef = ref(database, 'medicine');
+filterContainer.appendChild(orderIdSearchLabel);
+filterContainer.appendChild(orderIdSearchInput);
+filterContainer.appendChild(dateFilterLabel);
+filterContainer.appendChild(dateFilterInput);
+filterContainer.appendChild(clearDateButton);
 
-// Show the loader
-loaderElement.classList.remove('hidden');
 
-onValue(patientsRef, (snapshot) => {
-const patientsData = snapshot.val();
+// Append the filter container to the document body or another container
+popupContainer.appendChild(filterContainer);
 
-if (patientsData) {
-  patients = Object.values(patientsData); // Update the patients variable
-  renderPatients(patients);
+// Add fade-in animation to the popup container
+popupContainer.style.animation = "fadeIn 0.5s";
+// Add event listeners for the filter inputs
+dateFilterInput.addEventListener("input", handleDateFilter);
+orderIdSearchInput.addEventListener("input", handleOrderIdSearch);
+
+// Function to clear the date filter
+function clearDateFilter() {
+  dateFilterInput.value = "";
+  handleDateFilter({ target: { value: "" } }); // Trigger the filter function after clearing
+}
+
+// Filter by date handler function
+function handleDateFilter(event) {
+  const selectedDate = event.target.value;
+
+  // Clear previous orders
+  document.querySelectorAll('.receipt-container').forEach(receiptContainer => {
+    receiptContainer.style.display = 'none';
+  });
+
+  const receiptDetailsContainer = document.querySelector('.receipt-details-container');
+  let noOrdersMessageContainer = receiptDetailsContainer.querySelector('.no-orders-message-container');
+
+  // If the message container doesn't exist, create it
+  if (!noOrdersMessageContainer) {
+    noOrdersMessageContainer = document.createElement('div');
+    noOrdersMessageContainer.classList.add('no-orders-message-container');
+    receiptDetailsContainer.appendChild(noOrdersMessageContainer);
+
+    // Add an image on top of the message
+    const noOrdersImage = document.createElement('img');
+    noOrdersImage.src = 'img/nothing found.png'; // Provide the correct path to your image
+    noOrdersImage.alt = 'No Orders Image';
+    noOrdersImage.classList.add('no-orders-image');
+    noOrdersMessageContainer.appendChild(noOrdersImage);
+
+    // Create a paragraph element for the message
+    const noOrdersMessage = document.createElement('p');
+    noOrdersMessage.classList.add('no-orders-message');
+    noOrdersMessageContainer.appendChild(noOrdersMessage);
+  }
+
+  // Hide the message container initially
+  noOrdersMessageContainer.style.display = 'none';
+
+  // Clear existing content
+  noOrdersMessageContainer.querySelector('.no-orders-message').textContent = '';
+
+  // Track whether any orders are found for the selected date
+  let ordersFound = false;
+
+  // Iterate through receipt containers and filter based on date
+  document.querySelectorAll('.receipt-container').forEach(receiptContainer => {
+    const orderDateElement = receiptContainer.querySelector('.receipt-info:nth-child(2)');
+    const orderDate = orderDateElement.textContent.split(": ")[1]; // Extract the date part from the receipt
+
+    // Parse and format the orderDate to match the selectedDate format
+    const formattedOrderDate = new Date(orderDate);
+
+    // Check if formattedOrderDate is a valid date object
+    if (!isNaN(formattedOrderDate.getTime())) {
+      const formattedSelectedDate = formattedOrderDate.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      // Convert selectedDate to a Date object
+      const selectedDateObj = new Date(selectedDate);
+
+      if (selectedDate && formattedOrderDate.toISOString().split('T')[0] !== selectedDateObj.toISOString().split('T')[0]) {
+        receiptContainer.style.display = 'none'; // hide orders not matching the selected date
+      } else {
+        receiptContainer.style.display = 'block'; // show orders matching the selected date
+        ordersFound = true; // Orders are found for the selected date
+      }
+    }
+  });
+
+
+  // Toggle the visibility of the message container based on orders found
+  noOrdersMessageContainer.style.display = ordersFound ? 'none' : 'block';
+
+  // Update the message if no orders are found for the selected date
+  if (!ordersFound) {
+    noOrdersMessageContainer.querySelector('.no-orders-message').textContent = 'No orders found on this date.';
+  }
+
+  // Reattach event listeners to handle further filtering
+  dateFilterInput.addEventListener("input", handleDateFilter);
+  orderIdSearchInput.addEventListener("input", handleOrderIdSearch);
+}
+
+
+
+
+
+
+
+
+// Search by order ID handler function
+function handleOrderIdSearch(event) {
+  const searchText = event.target.value.toLowerCase();
+
+  // Clear previous orders and messages
+  document.querySelectorAll('.receipt-container').forEach(receiptContainer => {
+    receiptContainer.style.display = 'none';
+  });
+
+  const receiptDetailsContainer = document.querySelector('.receipt-details-container');
+  let searchResultsContainer = receiptDetailsContainer.querySelector('.search-results-container');
+
+  // If the search results container doesn't exist, create it
+  if (!searchResultsContainer) {
+    searchResultsContainer = document.createElement('div');
+    searchResultsContainer.classList.add('search-results-container');
+    receiptDetailsContainer.appendChild(searchResultsContainer);
+
+    // Add an image on top of the message
+    const noOrdersImage = document.createElement('img');
+    noOrdersImage.src = 'img/nothing found.png'; // Provide the correct path to your image
+    noOrdersImage.alt = 'No Orders Image';
+    noOrdersImage.classList.add('no-orders-image');
+    searchResultsContainer.appendChild(noOrdersImage);
+
+    // Create a paragraph element for the message
+    const noOrdersMessage = document.createElement('p');
+    noOrdersMessage.classList.add('no-orders-message');
+    searchResultsContainer.appendChild(noOrdersMessage);
+  }
+
+  // Hide the search results container initially
+  searchResultsContainer.style.display = 'none';
+
+  // Check if the message element exists before updating its textContent
+  const noOrdersMessageElement = searchResultsContainer.querySelector('.no-orders-message');
+  if (noOrdersMessageElement) {
+    // Clear existing content
+    noOrdersMessageElement.textContent = '';
+
+    // Track whether any orders are found for the search text
+    let ordersFound = false;
+
+    // Iterate through receipt containers and filter based on order ID
+    document.querySelectorAll('.receipt-container').forEach(receiptContainer => {
+      const orderId = receiptContainer.querySelector('.receipt-info:first-child').textContent;
+      if (searchText && !orderId.toLowerCase().includes(`${searchText}`)) {
+        receiptContainer.style.display = 'none'; // hide orders not matching the search text
+      } else {
+        receiptContainer.style.display = 'block'; // show orders matching the search text
+        ordersFound = true; // Orders are found for the search text
+      }
+    });
+
+    // Toggle the visibility of the search results container based on orders found
+    searchResultsContainer.style.display = ordersFound ? 'none' : 'block';
+
+    // Update the message if no orders are found for the search text
+    if (!ordersFound) {
+      noOrdersMessageElement.textContent = 'No orders found for the specified order ID.';
+    }
+  }
+
+  // Reattach event listeners to handle further filtering
+  dateFilterInput.addEventListener("input", handleDateFilter);
+  orderIdSearchInput.addEventListener("input", handleOrderIdSearch);
+}
+
+
+  // Iterate through user receipts and create elements for each receipt
+  for (const receiptId in userReceipts) {
+    const receipt = userReceipts[receiptId];
+
+    // Create a container for each receipt
+    const receiptContainer = document.createElement("div");
+    receiptContainer.classList.add("receipt-container");
+
+    // Create elements for receipt details using template literals
+    const receiptDetails = `
+ 
+<p class="receipt-info"><span>Order ID:  </span>   ${receipt.orderId}</p>
+<p class="receipt-info"><span>Order Date:  </span>   ${receipt.orderDate}</p>
+<p class="receipt-info"><span>Delivery Place: </span>   ${receipt.deliveryPlace}</p>
+<p class="receipt-info"><span>Means of Transport:  </span>   ${receipt.meansOfTransport}</p>
+<p class="receipt-info"><span>Payment Option:  </span>   ${receipt.selectedPaymentOption}</p>
+<p class="receipt-info"><span>Order Time:  </span>   ${receipt.orderTime}</p>
+
+
+
+      <!-- Replace the existing order summary element with this table -->
+<table class="order-summary-table">
+  <caption>Order Summary</caption>
+  <thead>
+    <tr>
+      <th>Pdt</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Total</th>
+      <th>WholeSale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Iterate through each item in the order summary -->
+    ${receipt.orderSummary.map(item => `
+      <tr>
+        <td>${item.productName}</td>
+        <td>${item.quantity}</td>
+        <td>UGX ${item.price.toFixed(2)}</td>
+        <td>UGX ${item.total.toFixed(2)}</td>
+        <td>${item.isWholesale}</td>
+      </tr>
+    `).join('')}
+  </tbody>
+</table>
+
+      <p class="receipt-info">Cart Total: UGX ${receipt.cartTotal.toFixed(2)}</p>
+    `;
+
+    // Set innerHTML of the receipt container
+    receiptContainer.innerHTML = receiptDetails;
+
+    // Append the receipt container to the receipt details container
+    receiptDetailsContainer.appendChild(receiptContainer);
+  }
+
+  // Append the close button and receipt details container to the popup container
+  popupContainer.appendChild(closeButton);
+  popupContainer.appendChild(filterContainer);
+  popupContainer.appendChild(receiptDetailsContainer);
+
+  // Add the popup container to the document body
+  document.body.appendChild(popupContainer);
+ // Add fade-in animation to the popup container
+ popupContainer.style.animation = "fadeIn 0.5s";
+
+}
+
+
+
+
+
+  const newScreensRef = ref(database, "products/newScreens");
+const gradeBScreens = ref(database, "products/gradeBScreens");
+const electronicsRef = ref(database, "products/electronics");
+const touchesRef = ref(database, "products/touches");
+const accessoriesRef = ref(database, "products/accessories");
+const portsRef = ref(database, "products/Ports");
+
+
+// Define your product references
+const productRefs = [
+  ref(database, "products/newScreens"),
+  ref(database, "products/gradeBScreens"),
+  ref(database, "products/electronics"),
+  ref(database, "products/touches"),
+  ref(database, "products/accessories"),
+  ref(database, "products/Ports"),
+];
+
+// Options for the Intersection Observer
+const observerOptions = {
+  root: null, // Use the viewport as the root
+  rootMargin: "0px", // No margin
+  threshold: 0.5, // Trigger when 50% of the target is visible
+};
+
+// Create a callback function for the Intersection Observer
+const intersectionCallback = (entries, observer) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      // If the target is intersecting, load or retrieve the products
+      const productRef = entry.target.dataset.productRef;
+      // Call a function to retrieve products from the specified reference
+      retrieveProducts(productRef);
+
+      // Unobserve the target to avoid unnecessary calls
+      observer.unobserve(entry.target);
+    }
+  });
+};
+
+// Create an Intersection Observer instance
+const productObserver = new IntersectionObserver(intersectionCallback, observerOptions);
+
+// Function to create a product element and observe it
+function observeProduct(productRef) {
+  const productContainer = document.createElement("div");
+  // Set the dataset for the product reference
+  productContainer.dataset.productRef = productRef;
+
+  // Append the product element to the DOM
+  document.getElementById("products-list").appendChild(productContainer);
+
+  // Observe the product element
+  productObserver.observe(productContainer);
+}
+
+
+
+
+const searchBtn = document.getElementById("search-btn");
+let isSearching = false;
+
+searchBtn.addEventListener("click", function (event) {
+  event.preventDefault();
+
+  if (isSearching) {
+    // If currently searching, clear search bar and perform search
+    searchProducts();
+  } else {
+    // If not currently searching and search bar is not empty, append the refresh icon and perform search
+    if (shouldShowRefreshIcon()) {
+      appendRefreshIcon();
+      searchProducts();
+      isSearching = true;
+    }
+  }
+
+
+function shouldShowRefreshIcon() {
+  const searchBar = document.getElementById("search-bar");
+  return searchBar.value.trim() !== "";
+}
+
+function appendRefreshIcon() {
+  if (!shouldShowRefreshIcon()) {
+    return;
+  }
+
+  // Create a new element for the refresh icon
+  const refreshIcon = document.createElement("i");
+  refreshIcon.classList.add("fa", "fa-refresh", "refresh-icon");
+
+  // Append the refresh icon to the right side of the search bar
+  const searchBar = document.getElementById("search-bar");
+  searchBar.parentNode.insertBefore(refreshIcon, searchBar.nextSibling);
+
+  // Add an event listener to the refresh icon to clear the search bar and perform search
+  refreshIcon.addEventListener("click", function () {
+    clearSearchBar();
+    searchProducts();
+  });
+
+  // Style the search button
+  searchBtn.style.background = 'orange';
+}
+
+function clearSearchBar() {
+  const searchBar = document.getElementById("search-bar");
+  searchBar.value = "";
+  isSearching = false;
+  revertSearchButton();
+}
+
+function revertSearchButton() {
+  // Remove the refresh icon from the search bar
+  const searchBar = document.getElementById("search-bar");
+  const icon = searchBar.nextSibling;
+  if (icon && icon.classList.contains("refresh-icon")) {
+    searchBar.parentNode.removeChild(icon);
+  }
+
+  // Style the search button
+  searchBtn.style.background = '#008abf';
+}
+
+});
+
+
+
+const searchBar = document.getElementById("search-bar");
+const suggestionsContainer = document.getElementById("suggestions-container");
+const overlay = document.getElementById('overlay');
+
+// Create a title element for suggestions
+const suggestionsTitle = document.createElement("div");
+suggestionsTitle.classList.add("suggestions-title");
+suggestionsTitle.textContent = "Suggestions";
+
+// Append the title to the suggestions container
+suggestionsContainer.appendChild(suggestionsTitle);
+
+// Variable to store the last search query
+let lastQuery = '';
+
+// Variable to track if suggestions have been processed
+let suggestionsProcessed = true;
+
+// Function to fetch suggestions with retries
+function fetchSuggestions(query, retryCount = 1) {
+    return new Promise((resolve, reject) => {
+      // Define an array of Firebase node references to search through
+      const firebaseNodes = [newScreensRef, gradeBScreens, accessoriesRef, portsRef, touchesRef, electronicsRef];
+  
+      // Create an array to store the promises returned by the Firebase queries
+      const promises = [];
+  
+      // Flag to check if any matching products were found
+      let matchingProductsFound = false;
+  
+      // Function to check if a string contains all words in another string
+      const containsAllWords = (str, words) => {
+        return words.every(word => str.includes(word));
+      };
+  
+      // Search for the query in each relevant Firebase node
+      firebaseNodes.forEach((nodeRef) => {
+        const promise = get(nodeRef).then((snapshot) => {
+          const data = snapshot.val();
+  
+          // Process the data and display matching products as suggestions
+          for (let productId in data) {
+            const product = data[productId];
+            const name = product.name.toLowerCase();
+            const description = product.description.toLowerCase();
+  
+            // Additional conditions for matching suggestions
+            if (
+              containsAllWords(name, query.toLowerCase().split(" ")) || // Matching suggestion with all words in any order
+              containsAllWords(name, query.replace(/[^a-zA-Z0-9\s]/g, "").toLowerCase().split(" ")) || // Matching suggestion with all alphanumeric words in any order
+              name.includes(query.toLowerCase()) || // Matching suggestion with partial name
+              description.includes(query.toLowerCase()) // Matching suggestion with partial description
+            ) {
+              matchingProductsFound = true;
+  
+// Create a suggestion element
+const suggestionItem = document.createElement("div");
+suggestionItem.classList.add("suggestion-item");
+
+// Create a search icon element
+const searchIcon = document.createElement("i");
+searchIcon.classList.add("fa", "fa-search", "search-icon");
+suggestionItem.appendChild(searchIcon);
+
+// Create a text node for the suggestion item
+const suggestionText = document.createTextNode(name);
+suggestionItem.appendChild(suggestionText);
+
+// Add a click event listener to log the suggestion into the search bar and perform search
+suggestionItem.addEventListener("click", function () {
+  searchBar.value = name;
+  suggestionsContainer.style.display = "none"; // Hide suggestions
+  overlay.style.display = 'none';
+  searchProducts(name); // Perform search for the selected suggestion
+});
+
+// Append the suggestion to the suggestions container
+suggestionsContainer.appendChild(suggestionItem);
+
+            }
+          }
+        });
+  
+        promises.push(promise);
+      });
+  
+      // Wait for all Firebase queries to complete
+      Promise.all(promises).then(() => {
+        // Set suggestionsProcessed to true
+        suggestionsProcessed = true;
+  
+        // Resolve or reject based on whether matching products were found
+        matchingProductsFound ? resolve() : reject();
+      });
+    });
+  }
+    
+// Function to initialize Firebase data and attach event listener
+function initializeSearch() {
+  // Listen for input events on the search bar
+  searchBar.addEventListener("input", function () {
+    // Clear existing suggestions (excluding the title)
+    while (suggestionsContainer.children.length > 1) {
+      suggestionsContainer.removeChild(suggestionsContainer.lastChild);
+    }
+
+    // Get the user input from the search bar
+    const query = searchBar.value.trim().toLowerCase();
+
+    // If the query is empty, hide suggestions
+    if (!query) {
+      suggestionsContainer.style.display = "none";
+      overlay.style.display = 'none';
+      return;
+    }
+
+    // Update lastQuery variable
+    lastQuery = query;
+
+    // Fetch suggestions with retries only if suggestionsProcessed is true
+    if (suggestionsProcessed) {
+      suggestionsProcessed = false; // Set suggestionsProcessed to false before fetching suggestions
+      fetchSuggestions(query)
+        .then(() => {
+          // Show the suggestions container if there are suggestions
+          suggestionsContainer.style.display = "block";
+          overlay.style.display = 'block';
+        })
+        .catch(() => {
+          // Show a message when no matching products are found
+          const noResultsMessage = document.createElement("div");
+          noResultsMessage.classList.add("no-results-message");
+          noResultsMessage.textContent = "No Matching products found!";
+
+          // Append the message to the suggestions container
+          suggestionsContainer.appendChild(noResultsMessage);
+
+          // Hide suggestions and overlay
+          suggestionsContainer.style.display = "block";
+          overlay.style.display = 'block';
+        });
+    }
+  });
+
+  // Add an event listener to the document to detect clicks
+  document.addEventListener("click", function (event) {
+    const searchBar = document.getElementById("search-bar");
+    const suggestionsContainer = document.getElementById("suggestions-container");
+    const overlay = document.getElementById('overlay');
+    // Check if the click target is not the search bar or suggestions container
+    if (event.target !== searchBar && !searchBar.contains(event.target) && event.target !== suggestionsContainer && !suggestionsContainer.contains(event.target)) {
+      // Click occurred outside the search bar and suggestions container
+      suggestionsContainer.style.display = "none"; // Hide suggestions
+      overlay.style.display = 'none';
+    }
+  });
+}
+
+// Call the function to initialize Firebase data and attach event listener
+initializeSearch();
+
+  
+  function searchProducts(searchTerm) {
+  const query = document.getElementById("search-bar").value.toLowerCase();
+  
+  // Display the loader
+  const loader = document.getElementById("loader");
+  loader.style.display = "block";
+
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+
+  // Define an array of Firebase node references to search through
+  const firebaseNodes = [newScreensRef, gradeBScreens, accessoriesRef,portsRef, touchesRef, electronicsRef];
+
+  // Create an array to store the promises returned by the Firebase queries
+  const promises = [];
+
+// Search for query in each relevant Firebase node
+firebaseNodes.forEach((nodeRef) => {
+  const promise = get(nodeRef).then((snapshot) => {
+    const data = snapshot.val();
+
+    // Process the data and display matching products
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      const name = product.name.toLowerCase();
+      const description = product.description.toLowerCase();
+      const queryLower = query.toLowerCase();
+
+      // Check for similarity with a minimum threshold (adjust as needed)
+      const nameSimilarity = calculateSimilarity({innerText: name}, queryLower);
+      const descriptionSimilarity = calculateSimilarity({innerText: description}, queryLower);
+
+      // If the query is empty or there is a match (even for one word), create a card for the product
+      if (!queryLower || nameSimilarity > 0.5 || descriptionSimilarity > 0.5 || name.includes(queryLower) || description.includes(queryLower)) {
+
+      // Create a card for the matching product
+const card = document.createElement("div");
+card.classList.add("card1");
+
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+
+
+
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title);
+
+      
+      // Add star rating
+const stars = document.createElement("div");
+stars.classList.add("stars");
+for (let j = 0; j < 5; j++) {
+  const star = document.createElement("span");
+  star.classList.add("star");
+  star.innerHTML = "&#9733;"; // Unicode character for a star
+  stars.appendChild(star);
+}
+card.appendChild(stars);
+/*
+// Add rate icon
+const rateIcon = document.createElement("i");
+rateIcon.classList.add("rate-icon", "fas", "fa-star");
+rateIcon.addEventListener("click", () => openRatingPopup(product.name));
+card.appendChild(rateIcon);
+*/
+// Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+/*
+function openRatingPopup(productName) {
+  // Get the modal element
+  const ratingModal = document.getElementById("rating-modal");
+
+  // Set the product name in the modal
+  const productNameElement = ratingModal.querySelector("#productName");
+  productNameElement.innerText = productName;
+
+  // Show the rating modal
+  ratingModal.style.display = "block";
+
+  // Attach click event listener to the close button
+  const closeBtn = document.getElementById("closeRatingPopup");
+  closeBtn.addEventListener("click", () => closeRatingPopup());
+}
+
+function closeRatingPopup() {
+  // Get the modal element
+  const ratingModal = document.getElementById("rating-modal");
+
+  // Hide the rating modal
+  ratingModal.style.display = "none";
+}
+
+*/
+        // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+
+
+
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+
+
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+// Function to fetch wholesale price from Firebase
+async function fetchWholesalePriceFromFirebase(productName) {
+  // Define an array of subcategories you want to search through
+  const subcategories = ["accessories", "Ports", "touches", "newScreens", "gradeBScreens", "electronics"]; // Add more subcategories as needed
+
+  // Iterate through each subcategory and check for the product
+  for (const subcategory of subcategories) {
+    const productsRef = ref(database, `products/${subcategory}`);
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+  }
+
+  // Return a default value or handle the case when the product is not found in any subcategory
+  return null;
+}
+
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+      // Add card to list
+      productsList.appendChild(card);
+    }
+      }
+    });
+
+    promises.push(promise);
+  });
+
+ // Wait for all promises to resolve before proceeding
+Promise.all(promises).then(() => {
+  // Sort products by relevance based on similarity to the query
+  const products = Array.from(document.querySelectorAll('.card1'));
+  products.sort((a, b) => {
+    const aSimilarity = calculateSimilarity(a, query);
+    const bSimilarity = calculateSimilarity(b, query);
+    return bSimilarity - aSimilarity; // Sort in descending order of similarity
+  });
+
+// Clear the products list
+document.getElementById("products-list").innerHTML = "";
+
+// Append sorted products or display a message
+const productsList = document.getElementById("products-list");
+
+if (products.length === 0) {
+  // If no relevant products found, create a container for the message and image
+  const noResultsContainer = document.createElement("div");
+  noResultsContainer.classList.add("no-results-container");
+
+  // Add an image on top
+  const noResultsImage = document.createElement("img");
+  noResultsImage.src = "img/nothing found.png"; // Replace with the actual path to your image
+  noResultsImage.alt = "No Results Image";
+  noResultsContainer.appendChild(noResultsImage);
+
+  // Add the message
+  const noResultsMessage = document.createElement("p");
+  noResultsMessage.innerText = "Oops...No relevant products found. If you cant find your desired product, please contact us to add it. Thank you!";
+  noResultsMessage.classList.add("no-results-message");
+  noResultsContainer.appendChild(noResultsMessage);
+
+  // Append the container to the productsList
+  productsList.appendChild(noResultsContainer);
+} else {
+  // If relevant products found, append them to the productsList
+  products.forEach((product) => productsList.appendChild(product));
 }
 
 // Hide the loader
-loaderElement.classList.add('hidden');
+loader.style.display = "none";
 });
 
-// Get the online status element
-const onlineStatusElement = document.getElementById('onlineStatus');
-const overlayElement = document.getElementById('overlay');
-
-// Function to update the online status indicator
-function updateOnlineStatus() {
-if (navigator.onLine) {
-  onlineStatusElement.innerHTML = '<i class="fa fa-wifi"></i>';
-  onlineStatusElement.classList.remove('offline');
-  onlineStatusElement.classList.add('online');
-  overlayElement.style.display = 'none';
-} else {
-  onlineStatusElement.innerHTML = '<i class="fa fa-exclamation-triangle"></i>';
-  onlineStatusElement.classList.remove('online');
-  onlineStatusElement.classList.add('offline');
-  overlayElement.style.display = 'block';
-}
 }
 
 
-// Initial update of online status
-updateOnlineStatus();
 
-// Add event listeners for online and offline events
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-
-
-function getGreeting() {
-var currentDate = new Date();
-var currentHour = currentDate.getHours();
-
-var greeting;
-if (currentHour < 12) {
-  greeting = "Good morning";
-} else if (currentHour < 18) {
-  greeting = "Good afternoon";
-} else {
-  greeting = "Good evening";
+// Function to calculate string similarity (Levenshtein distance)
+function similarity(str1, str2) {
+  const maxLength = Math.max(str1.length, str2.length);
+  const distance = levenshteinDistance(str1, str2);
+  return 1 - distance / maxLength;
 }
 
-return greeting;
-}
+function levenshteinDistance(str1, str2) {
+  const m = str1.length;
+  const n = str2.length;
+  const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
 
-var greetingDiv = document.getElementById("greeting");
-var greeting = getGreeting();
-greetingDiv.textContent = greeting;
-
-window.addEventListener('load', function () {
-const splashScreen = document.getElementById('splashScreen');
-splashScreen.style.opacity = '1';
-
-// Smoothly fade out the splash screen
-setTimeout(function () {
-  splashScreen.style.transition = 'opacity 0.5s ease-in-out';
-  splashScreen.style.opacity = '0';
-  setTimeout(function () {
-    splashScreen.style.display = 'none';
-  }, 500);
-}, 6000); // The splash screen will be shown for 5 seconds
-
-// Initialize the spinner
-const spinner = new Spinner().spin();
-
-// Append the spinner to the spinner element
-const spinnerElement = document.getElementById('spinner');
-spinnerElement.appendChild(spinner.el);
-});
-
-
-// Assuming you have a 'medicines' node in your Firebase database with each medicine having a 'price' field
-const medicinesRef = ref(database, 'medicine');
-const overallCostDisplay = document.getElementById('overallCostDisplay');
-
-// Function to calculate the overall cost with retry
-async function calculateOverallCostWithRetry(maxRetries = 100, delayBetweenRetries = 1000) {
-  let retries = 0;
-
-  async function attemptCalculation() {
-    try {
-      const snapshot = await get(medicinesRef);
-
-      if (snapshot.exists()) {
-        let overallCost = 0;
-
-        // Iterate through each medicine in the snapshot
-        snapshot.forEach((medicineSnapshot) => {
-          const medicineData = medicineSnapshot.val();
-
-          // Assuming each medicine has a 'price' and 'quantity' field
-          const pricePerPiece = medicineData.price || 0;
-          const quantity = medicineData.parents || 0;
-
-          // Calculate the cost for the current medicine
-          const medicineCost = pricePerPiece * quantity;
-
-          // Add the cost to the overall cost
-          overallCost += medicineCost;
-        });
-
-        // Format the overall cost
-        const formattedAmount = overallCost.toLocaleString('en');
-
-        // Display the overall cost in the div
-        overallCostDisplay.innerHTML = `<i class="fa fa-line-chart icon"></i> Overall Estimated Revenue: UGX ${formattedAmount}`;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      if (i === 0) {
+        dp[i][j] = j;
+      } else if (j === 0) {
+        dp[i][j] = i;
+      } else if (str1[i - 1] === str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
       } else {
-        overallCostDisplay.textContent = 'No medicines found in the database.';
-      }
-    } catch (error) {
-      console.error('Error calculating overall cost:', error.message);
-
-      // Retry if the maximum number of retries hasn't been reached
-      if (retries < maxRetries) {
-        retries++;
-        console.log(`Retrying (Attempt ${retries})...`);
-        setTimeout(attemptCalculation, delayBetweenRetries);
-      } else {
-        console.error('Max retries reached. Unable to fetch data.');
+        dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
       }
     }
   }
 
-  // Start the initial attempt
-  attemptCalculation();
+  return dp[m][n];
 }
 
-// Call the function to calculate the overall cost with retry
-calculateOverallCostWithRetry();
+// Function to calculate similarity between product and query
+function calculateSimilarity(productCard, query) {
+  const productText = productCard.innerText.toLowerCase();
+  const queryWords = query.toLowerCase().split(' ');
+
+  // Generate all possible permutations of query words
+  const permutations = generatePermutations(queryWords);
+
+  // Calculate similarity for each permutation and find the maximum
+  let maxSimilarity = 0;
+  for (const perm of permutations) {
+    const permString = perm.join(' ');
+    const currentSimilarity = similarity(productText, permString);
+    maxSimilarity = Math.max(maxSimilarity, currentSimilarity);
+  }
+
+  return maxSimilarity;
+}
+
+// Function to generate all possible permutations of an array
+function generatePermutations(arr) {
+  if (arr.length <= 1) {
+    return [arr];
+  }
+
+  const result = [];
+  for (let i = 0; i < arr.length; i++) {
+    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+    const permutations = generatePermutations(rest);
+    for (const perm of permutations) {
+      result.push([arr[i], ...perm]);
+    }
+  }
+
+  return result;
+}
+
+
+//button for brand new//
+
+
+
+document.querySelector("#brand-new-link").addEventListener("click", () => {
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+    // Display the loader
+    const loader = document.getElementById("loader");
+  loader.style.display = "block";
+
+
+  // Get products from newPhonesRef
+  get(newScreensRef).then((snapshot) => {
+    const data = snapshot.val();
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge2");
+      badge.innerText = "Brand New";
+      card.appendChild(badge);
+       // Add guarantee text
+const guaranteeText = document.createElement("div");
+guaranteeText.innerHTML = "<i class='fa fa-shield'></i>1 month Guarantee for Brand New";
+guaranteeText.classList.add("guarantee-text");
+card.appendChild(guaranteeText);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title); 
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+    
+   
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/newScreens");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+});
+
+
+//button for used //
+
+
+
+document.querySelector("#uk-used-link").addEventListener("click", () => {
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+   // Display the loader
+   const loader = document.getElementById("loader");
+  loader.style.display = "block";
+
+  // Get products from newPhonesRef
+  get(gradeBScreens).then((snapshot) => {
+    const data = snapshot.val();
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge");
+      badge.innerText = "Grade B";
+      card.appendChild(badge);
+       // Add guarantee text
+const guaranteeText = document.createElement("div");
+guaranteeText.innerHTML = "<i class='fa fa-shield'></i>No Guarantee for Grade B";
+guaranteeText.classList.add("guarantee-text");
+card.appendChild(guaranteeText);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title);
+      
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+    
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/gradeBScreens");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+});
+
+//Phones//
+
+
+
+
+document.querySelector("#newScreens-link").addEventListener("click", () => {
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+   // Display the loader
+   const loader = document.getElementById("loader");
+  loader.style.display = "block";
+  // Get products from newPhonesRef
+  get(newScreensRef).then((snapshot) => {
+    const data = snapshot.val();
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge2");
+      badge.innerText = "Brand New";
+      card.appendChild(badge);
+       // Add guarantee text
+      const guaranteeText = document.createElement("div");
+      guaranteeText.innerHTML = "<i class='fa fa-shield'></i>1 month Guarantee for Brand New Screens";
+      guaranteeText.classList.add("guarantee-text");
+      card.appendChild(guaranteeText);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title);  
+      
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+     
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/newScreens");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+});
+
+
+
+
+   // Get products from newPhonesRef
+   get(gradeBScreens).then((snapshot) => {
+    const data = snapshot.val();
+     // Display the loader
+  const loader = document.getElementById("loader");
+  loader.style.display = "block";
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge");
+      badge.innerText = "Grade B ";
+      card.appendChild(badge);
+       // Add guarantee text
+const guaranteeText = document.createElement("div");
+guaranteeText.innerHTML = "<i class='fa fa-shield'></i> No Guarantee for Grede B";
+guaranteeText.classList.add("guarantee-text");
+card.appendChild(guaranteeText);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title); 
+      
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+    
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/gradeBScreens");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+
+
+
+
+
+//tevevisions navigation//
+
+
+
+
+document.querySelector("#touches-link").addEventListener("click", () => {
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+  
+   // Display the loader
+   const loader = document.getElementById("loader");
+  loader.style.display = "block";
+  // Get products from newPhonesRef
+  get(touchesRef).then((snapshot) => {
+    const data = snapshot.val();
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge2");
+      badge.innerText = "Brand New";
+      card.appendChild(badge);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title); 
+      
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+     
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/touches");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+});
+
+
+
+//sound navigation//
+
+
+
+document.querySelector("#electronics-link").addEventListener("click", () => {
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+   // Display the loader
+   const loader = document.getElementById("loader");
+  loader.style.display = "block";
+
+  // Get products from newPhonesRef
+  get(electronicsRef).then((snapshot) => {
+    const data = snapshot.val();
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge2");
+      badge.innerText = "Brand New";
+      card.appendChild(badge);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title);
+      
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+    
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/electronics");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+});
+
+
+//accessories Navigation//
+
+
+
+
+document.querySelector("#accessories-link").addEventListener("click", () => {
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+   // Display the loader
+   const loader = document.getElementById("loader");
+  loader.style.display = "block";
+  // Get products from newPhonesRef
+  get(accessoriesRef).then((snapshot) => {
+    const data = snapshot.val();
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge2");
+      badge.innerText = "Brand New";
+      card.appendChild(badge);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title); 
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+    
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/accessories");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+});
+
+
+
+//tablets Navigation//
+
+
+
+document.querySelector("#ports-link").addEventListener("click", () => {
+  // Clear the products list
+  document.getElementById("products-list").innerHTML = "";
+  
+   // Display the loader
+   const loader = document.getElementById("loader");
+  loader.style.display = "block";
+  // Get products from newPhonesRef
+  get(portsRef).then((snapshot) => {
+    const data = snapshot.val();
+    const productsList = document.getElementById("products-list");
+    for (let i in data) {
+      const product = data[i];
+      // Create a card for the product
+      const card = document.createElement("div");
+      card.classList.add("card1");
+      // Add "Brand New" badge
+      const badge = document.createElement("div");
+      badge.classList.add("used-badge2");
+      badge.innerText = "Brand New";
+      card.appendChild(badge);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      // Add product name
+      const title = document.createElement("h2");
+      title.innerText = product.name;
+      card.appendChild(title); 
+      
+      
+      // Add star rating
+      const stars = document.createElement("div");
+      stars.classList.add("stars");
+      for (let j = 0; j < 5; j++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.innerHTML = "&#9733;"; // Unicode character for a star
+        stars.appendChild(star);
+      }
+      card.appendChild(stars);
+
+      // Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+              // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+
+      // Add product description
+      const desc = document.createElement("p");
+      desc.innerText = product.description;
+      card.appendChild(desc);
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+     
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/Ports");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list
+      productsList.appendChild(card);
+      loader.style.display = "none";
+    }
+  });
+});
+
+
+
+           const loaderContainer = document.querySelector('.loader-container');
+         //   const loader = document.querySelector('.loader');
+            const productsList = document.getElementById("products-list");
+            const modal = document.querySelector('.modal');
+            const modalImg = document.getElementById("modalImg");
+            const closeBtn = document.querySelector('.close');
+      
+      
+          //  loaderContainer.style.display = "flex"; // show the loader
+
+
+// Function to load new screens cards
+function loadNewScreenCards(data) {
+  const productsList = document.getElementById("products-list");
+  for (let i in data) {
+    const product = data[i];
+    const newScreenCard = document.createElement("div");
+    newScreenCard.classList.add("card1");
+                       // Add "used" badge
+  const usedBadge = document.createElement("div");
+  usedBadge.classList.add("used-badge2");
+  usedBadge.innerText = "Brand New";
+  newScreenCard.appendChild(usedBadge);
+   // Add guarantee text
+const guaranteeText = document.createElement("div");
+guaranteeText.innerHTML = "<i class='fa fa-shield'></i>1 month Guarantee for Brand New";
+guaranteeText.classList.add("guarantee-text");
+newScreenCard.appendChild(guaranteeText);
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      
+      const modal = document.querySelector(".modal");
+      const closeBtn = document.querySelector(".close");
+      closeBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+          
+ 
+
+                const title = document.createElement("h2");
+                title.innerText = product.name;
+                newScreenCard.appendChild(title);
+
+
+                      const stars = document.createElement("div");            
+stars.classList.add("stars");
+for (let j = 0; j < 5; j++) {
+  const star = document.createElement("span");
+  star.classList.add("star");
+  star.innerHTML = "&#9733;"; // Unicode character for a star
+  stars.appendChild(star);
+}
+newScreenCard.appendChild(stars);
+
+
+// Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+newScreenCard.appendChild(ratingCount);
+
+
+        // Add fast delivery sticker with icon
+        const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  newScreenCard.appendChild(stickerContainer);
+
+
+
+                const desc = document.createElement("p");
+                desc.innerText = product.description;
+                newScreenCard.appendChild(desc);
+      
+
+      
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+newScreenCard.appendChild(price);
+
+
+
+
+      
+      
+      // Open the Modal
+      function openModal(img) {
+        document.getElementById("modalImg").src = img.src;
+        document.querySelector(".modal").style.display = "block";
+      }
+      
+      // Close the Modal
+      document.querySelector(".close").addEventListener("click", function() {
+        document.querySelector(".modal").style.display = "none";
+      });
+      
+      
+      
+              
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/newScreens");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+newScreenCard.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+    // Add card to list only if it's in the viewport
+    if (isNewScreenElementInViewport(newScreenCard)) {
+      productsList.appendChild(newScreenCard);
+    }
+  }
+  loader.style.display = "none";
+}
+
+
+// Function to check if an element is in the viewport
+function isNewScreenElementInViewport(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+// Function to handle scroll events for new screens
+function handleNewScreenScroll() {
+  const productsList = document.getElementById("products-list");
+  const newScreenCards = document.querySelectorAll(".card1");
+
+  newScreenCards.forEach((newScreenCard) => {
+    if (isNewScreenElementInViewport(newScreenCard) && !productsList.contains(newScreenCard)) {
+      productsList.appendChild(newScreenCard);
+    }
+  });
+}
+
+// Attach scroll event listener for new screens
+window.addEventListener("scroll", handleNewScreenScroll);
+
+// Function to load new screen cards with retries and backoff strategy
+function loadNewScreenCardsWithRetriesAndBackoff(retries = 5, initialDelay = 1000, maxDelay = 16000) {
+  // Retry loading new screen cards with backoff
+  function retryLoad(delay) {
+    setTimeout(() => {
+      // Make the asynchronous call to retrieve new screens data
+      get(newScreensRef).then((snapshot) => {
+        const data = snapshot.val();
+        // Check if data is retrieved successfully
+        if (data) {
+          loadNewScreenCards(data);
+        } else {
+          // Retry with an increased delay if data is not retrieved successfully
+          const nextDelay = Math.min(delay * 2, maxDelay);
+          retryLoad(nextDelay);
+        }
+      }).catch(() => {
+        // Retry with an increased delay if there is an error in retrieving data
+        const nextDelay = Math.min(delay * 2, maxDelay);
+        retryLoad(nextDelay);
+      });
+    }, delay);
+  }
+
+  // Initial attempt to retrieve new screens data
+  retryLoad(initialDelay);
+}
+
+// Call the function to load new screen cards with retries and backoff strategy
+loadNewScreenCardsWithRetriesAndBackoff();
+
+
+
+
+
+//gradeBScreens //
+
+// Function to load gradeB screen cards
+function loadGradeBScreenCards(data) {
+  const productsList = document.getElementById("products-list");
+  for (let i in data) {
+    const product = data[i];
+    const gradeBScreenCard = document.createElement("div");
+    gradeBScreenCard.classList.add("card1");
+
+
+                  // Add "used" badge
+  const usedBadge = document.createElement("div");
+  usedBadge.classList.add("used-badge");
+  usedBadge.innerText = "Grade B ";
+  gradeBScreenCard.appendChild(usedBadge);
+   // Add guarantee text
+const guaranteeText = document.createElement("div");
+guaranteeText.innerHTML = "<i class='fa fa-shield'></i>No Guarantee for Grade B";
+guaranteeText.classList.add("guarantee-text");
+gradeBScreenCard.appendChild(guaranteeText);
+      
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      
+      const modal = document.querySelector(".modal");
+      const closeBtn = document.querySelector(".close");
+      closeBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+          
+ 
+
+                const title = document.createElement("h2");
+                title.innerText = product.name;
+                gradeBScreenCard.appendChild(title);
+      
+                const stars = document.createElement("div");            
+stars.classList.add("stars");
+for (let j = 0; j < 5; j++) {
+  const star = document.createElement("span");
+  star.classList.add("star");
+  star.innerHTML = "&#9733;"; // Unicode character for a star
+  stars.appendChild(star);
+}
+gradeBScreenCard.appendChild(stars);
+
+// Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+gradeBScreenCard.appendChild(ratingCount);
+
+
+
+        // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  gradeBScreenCard.appendChild(stickerContainer);
+
+
+                const desc = document.createElement("p");
+                desc.innerText = product.description;
+                gradeBScreenCard.appendChild(desc);
+      
+     
+      
+      
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+gradeBScreenCard.appendChild(price);
+
+      
+
+
+
+
+
+      
+      
+      // Open the Modal
+      function openModal(img) {
+        document.getElementById("modalImg").src = img.src;
+        document.querySelector(".modal").style.display = "block";
+      }
+      
+      // Close the Modal
+      document.querySelector(".close").addEventListener("click", function() {
+        document.querySelector(".modal").style.display = "none";
+      });
+      
+      
+      
+      
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/gradeBScreens");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+gradeBScreenCard.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+    // Add card to list only if it's in the viewport
+    if (isGradeBScreenElementInViewport(gradeBScreenCard)) {
+      productsList.appendChild(gradeBScreenCard);
+    }
+  }
+  loader.style.display = "none";
+}
+
+// Function to check if an element is in the viewport
+function isGradeBScreenElementInViewport(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+
+
+// Function to handle scroll events for gradeB screens
+function handleGradeBScreenScroll() {
+  const productsList = document.getElementById("products-list");
+  const gradeBScreenCards = document.querySelectorAll(".card1");
+
+  gradeBScreenCards.forEach((gradeBScreenCard) => {
+    if (isGradeBScreenElementInViewport(gradeBScreenCard) && !productsList.contains(gradeBScreenCard)) {
+      productsList.appendChild(gradeBScreenCard);
+    }
+  });
+}
+
+// Attach scroll event listener for gradeB screens
+window.addEventListener("scroll", handleGradeBScreenScroll);
+// Function to load gradeB screen cards with retries and backoff strategy
+function loadGradeBScreenCardsWithRetriesAndBackoff(retries = 5, initialDelay = 1000, maxDelay = 16000) {
+  // Retry loading gradeB screen cards with backoff
+  function retryLoad(delay) {
+    setTimeout(() => {
+      // Make the asynchronous call to retrieve gradeB screens data
+      get(gradeBScreens).then((snapshot) => {
+        const data = snapshot.val();
+        // Check if data is retrieved successfully
+        if (data) {
+          loadGradeBScreenCards(data);
+        } else {
+          // Retry with an increased delay if data is not retrieved successfully
+          const nextDelay = Math.min(delay * 2, maxDelay);
+          retryLoad(nextDelay);
+        }
+      }).catch(() => {
+        // Retry with an increased delay if there is an error in retrieving data
+        const nextDelay = Math.min(delay * 2, maxDelay);
+        retryLoad(nextDelay);
+      });
+    }, delay);
+  }
+
+  // Initial attempt to retrieve gradeB screens data
+  retryLoad(initialDelay);
+}
+
+// Call the function to load gradeB screen cards with retries and backoff strategy
+loadGradeBScreenCardsWithRetriesAndBackoff();
+
+
+
+
+
+
+    //ports//
+
+
+// Function to load port cards
+function loadPortCards(data) {
+  const productsList = document.getElementById("products-list");
+  for (let i in data) {
+    const product = data[i];
+    const portCard = document.createElement("div");
+    portCard.classList.add("card1");
+
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      
+      const modal = document.querySelector(".modal");
+      const closeBtn = document.querySelector(".close");
+      closeBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+          
+ 
+
+                const title = document.createElement("h2");
+                title.innerText = product.name;
+                portCard.appendChild(title);
+      
+                const stars = document.createElement("div");            
+stars.classList.add("stars");
+for (let j = 0; j < 5; j++) {
+  const star = document.createElement("span");
+  star.classList.add("star");
+  star.innerHTML = "&#9733;"; // Unicode character for a star
+  stars.appendChild(star);
+}
+portCard.appendChild(stars);
+
+
+// Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+portCard.appendChild(ratingCount);
+
+
+        // Add fast delivery sticker with icon
+        const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  portCard.appendChild(stickerContainer);
+
+
+
+                const desc = document.createElement("p");
+                desc.innerText = product.description;
+                portCard.appendChild(desc);
+      
+      
+      
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+portCard.appendChild(price);
+
+      
+
+
+
+      
+      
+      // Open the Modal
+      function openModal(img) {
+        document.getElementById("modalImg").src = img.src;
+        document.querySelector(".modal").style.display = "block";
+      }
+      
+      // Close the Modal
+      document.querySelector(".close").addEventListener("click", function() {
+        document.querySelector(".modal").style.display = "none";
+      });
+      
+      
+      
+              
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/Ports");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+portCard.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+    // Add port card to list only if it's in the viewport
+    if (isPortElementInViewport(portCard)) {
+      productsList.appendChild(portCard);
+    }
+  }
+  loader.style.display = "none";
+}
+
+   
+
+// Function to check if an element is in the viewport
+function isPortElementInViewport(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+
+
+
+// Function to handle scroll events for ports
+function handlePortScroll() {
+  const productsList = document.getElementById("products-list");
+  const portCards = document.querySelectorAll(".card1");
+
+  portCards.forEach((portCard) => {
+    if (isPortElementInViewport(portCard) && !productsList.contains(portCard)) {
+      productsList.appendChild(portCard);
+    }
+  });
+}
+
+// Attach scroll event listener for ports
+window.addEventListener("scroll", handlePortScroll);
+// Function to load port cards with retries and backoff strategy
+function loadPortCardsWithRetriesAndBackoff(retries = 5, initialDelay = 1000, maxDelay = 16000) {
+  // Retry loading port cards with backoff
+  function retryLoad(delay) {
+    setTimeout(() => {
+      // Make the asynchronous call to retrieve ports data
+      get(portsRef).then((snapshot) => {
+        const data = snapshot.val();
+        // Check if data is retrieved successfully
+        if (data) {
+          loadPortCards(data);
+        } else {
+          // Retry with an increased delay if data is not retrieved successfully
+          const nextDelay = Math.min(delay * 2, maxDelay);
+          retryLoad(nextDelay);
+        }
+      }).catch(() => {
+        // Retry with an increased delay if there is an error in retrieving data
+        const nextDelay = Math.min(delay * 2, maxDelay);
+        retryLoad(nextDelay);
+      });
+    }, delay);
+  }
+
+  // Initial attempt to retrieve ports data
+  retryLoad(initialDelay);
+}
+
+// Call the function to load port cards with retries and backoff strategy
+loadPortCardsWithRetriesAndBackoff();
+
+
+
+
+    //touches//
+
+
+// Function to load touches cards
+function loadTouchesCards(data) {
+  const productsList = document.getElementById("products-list");
+  for (let i in data) {
+    const product = data[i];
+    const card = document.createElement("div");
+    card.classList.add("card1");
+
+      
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      
+      const modal = document.querySelector(".modal");
+      const closeBtn = document.querySelector(".close");
+      closeBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+          
+ 
+
+                const title = document.createElement("h2");
+                title.innerText = product.name;
+                card.appendChild(title);
+      
+                const stars = document.createElement("div");            
+stars.classList.add("stars");
+for (let j = 0; j < 5; j++) {
+  const star = document.createElement("span");
+  star.classList.add("star");
+  star.innerHTML = "&#9733;"; // Unicode character for a star
+  stars.appendChild(star);
+}
+card.appendChild(stars);
+
+
+// Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+
+        // Add fast delivery sticker with icon
+  const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+                const desc = document.createElement("p");
+                desc.innerText = product.description;
+                card.appendChild(desc);
+      
+      
+      
+      
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+      
+
+
+
+      
+      
+      // Open the Modal
+      function openModal(img) {
+        document.getElementById("modalImg").src = img.src;
+        document.querySelector(".modal").style.display = "block";
+      }
+      
+      // Close the Modal
+      document.querySelector(".close").addEventListener("click", function() {
+        document.querySelector(".modal").style.display = "none";
+      });
+      
+      
+      
+   
+      
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/touches");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+    // Add touches card to list only if it's in the viewport
+    if (isInViewportTouches(card)) {
+      productsList.appendChild(card);
+    }
+  }
+  loader.style.display = "none";
+}
+   
+
+// Function to check if an element is in the viewport
+function isInViewportTouches(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+
+
+
+// Function to handle scroll events for touches
+function handleScrollTouches() {
+  const productsList = document.getElementById("products-list");
+  const cards = document.querySelectorAll(".card1");
+
+  cards.forEach((card) => {
+    if (isInViewportTouches(card) && !productsList.contains(card)) {
+      productsList.appendChild(card);
+    }
+  });
+}
+
+// Attach scroll event listener for touches
+window.addEventListener("scroll", handleScrollTouches);
+
+// Function to load touches cards with retries and backoff strategy
+function loadTouchesCardsWithRetriesAndBackoff(retries = 5, initialDelay = 1000, maxDelay = 16000) {
+  // Retry loading touches cards with backoff
+  function retryLoad(delay) {
+    setTimeout(() => {
+      // Make the asynchronous call to retrieve touches data
+      get(touchesRef).then((snapshot) => {
+        const data = snapshot.val();
+        // Check if data is retrieved successfully
+        if (data) {
+          loadTouchesCards(data);
+        } else {
+          // Retry with an increased delay if data is not retrieved successfully
+          const nextDelay = Math.min(delay * 2, maxDelay);
+          retryLoad(nextDelay);
+        }
+      }).catch(() => {
+        // Retry with an increased delay if there is an error in retrieving data
+        const nextDelay = Math.min(delay * 2, maxDelay);
+        retryLoad(nextDelay);
+      });
+    }, delay);
+  }
+
+  // Initial attempt to retrieve touches data
+  retryLoad(initialDelay);
+}
+
+// Call the function to load touches cards with retries and backoff strategy
+loadTouchesCardsWithRetriesAndBackoff();
+
+
+
+
+    //accessories//
+
+
+function isInViewport(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+// Function to load cards
+function loadCards(data) {
+  const productsList = document.getElementById("products-list");
+  for (let i in data) {
+    const product = data[i];
+    const card = document.createElement("div");
+    card.classList.add("card1");
+
+      
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      
+      const modal = document.querySelector(".modal");
+      const closeBtn = document.querySelector(".close");
+      closeBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+          
+ 
+
+                const title = document.createElement("h2");
+                title.innerText = product.name;
+                card.appendChild(title);
+      
+                const stars = document.createElement("div");            
+stars.classList.add("stars");
+for (let j = 0; j < 5; j++) {
+  const star = document.createElement("span");
+  star.classList.add("star");
+  star.innerHTML = "&#9733;"; // Unicode character for a star
+  stars.appendChild(star);
+}
+card.appendChild(stars);
+
+
+// Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+        // Add fast delivery sticker with icon
+        const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+                const desc = document.createElement("p");
+                desc.innerText = product.description;
+                card.appendChild(desc);
+      
+     
+      
+      
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+
+
+
+
+      
+      
+      // Open the Modal
+      function openModal(img) {
+        document.getElementById("modalImg").src = img.src;
+        document.querySelector(".modal").style.display = "block";
+      }
+      
+      // Close the Modal
+      document.querySelector(".close").addEventListener("click", function() {
+        document.querySelector(".modal").style.display = "none";
+      });
+      
+      
+      
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/accessories");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+const cart = document.getElementById('cart-container')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+if (isInViewport(card)) {
+      productsList.appendChild(card);
+    }
+  }
+  loader.style.display = "none";
+}
+// Function to handle scroll events
+function handleScroll() {
+  const productsList = document.getElementById("products-list");
+  const cards = document.querySelectorAll(".card1");
+
+  cards.forEach((card) => {
+    if (isInViewport(card) && !productsList.contains(card)) {
+      productsList.appendChild(card);
+    }
+  });
+}
+
+// Attach scroll event listener
+window.addEventListener("scroll", handleScroll);
+// Function to load cards with retries and backoff strategy
+function loadCardsWithRetriesAndBackoff(dataRef, loadFunction, retries = 5, initialDelay = 1000, maxDelay = 16000) {
+  // Retry loading cards with backoff
+  function retryLoad(delay) {
+    setTimeout(() => {
+      // Make the asynchronous call to retrieve data
+      get(dataRef).then((snapshot) => {
+        const data = snapshot.val();
+        // Check if data is retrieved successfully
+        if (data) {
+          loadFunction(data);
+        } else {
+          // Retry with an increased delay if data is not retrieved successfully
+          const nextDelay = Math.min(delay * 2, maxDelay);
+          retryLoad(nextDelay);
+        }
+      }).catch(() => {
+        // Retry with an increased delay if there is an error in retrieving data
+        const nextDelay = Math.min(delay * 2, maxDelay);
+        retryLoad(nextDelay);
+      });
+    }, delay);
+  }
+
+  // Initial attempt to retrieve data
+  retryLoad(initialDelay);
+}
+
+// Call the function to load cards with retries and backoff strategy for accessories
+loadCardsWithRetriesAndBackoff(accessoriesRef, loadCards);
+
+
+//electronics//
+
+// Function to load cards
+function loadCardsNew(data) {
+  const productsList = document.getElementById("products-list");
+  for (let i in data) {
+    const product = data[i];
+    const card = document.createElement("div");
+    card.classList.add("card1");
+
+// Add product image
+const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+img.classList.add("product-img");
+
+// Create a loader element
+const loader2 = document.createElement("div");
+loader2.classList.add("loader2");
+loader2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // You can use any loading icon
+
+// Append the loader to the card
+card.appendChild(loader2);
+
+// Add a load event listener to toggle the loader visibility
+img.addEventListener("load", () => {
+  // Hide the loader when the image is loaded
+  loader2.style.display = "none";
+});
+img.addEventListener("click", () => {
+  const modal = document.querySelector(".modal");
+  const modalImg = document.querySelector("#modalImg");
+  modal.style.display = "block";
+  modalImg.src = img.src;
+});
+card.appendChild(img);
+
+
+// Add an error event listener to handle image load errors
+img.addEventListener("error", () => {
+  // Hide the loader and display an alternative text or image for load errors
+  loader2.style.display = "none";
+  img.src = "img/no photo.png"; // Replace with your error image path
+  img.alt = "Image Load Error"; // Replace with your error message
+});
+
+// Append the image to the card
+card.appendChild(img);
+      
+      const modal = document.querySelector(".modal");
+      const closeBtn = document.querySelector(".close");
+      closeBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+          
+ 
+
+                const title = document.createElement("h2");
+                title.innerText = product.name;
+                card.appendChild(title);
+      
+                const stars = document.createElement("div");            
+stars.classList.add("stars");
+for (let j = 0; j < 5; j++) {
+  const star = document.createElement("span");
+  star.classList.add("star");
+  star.innerHTML = "&#9733;"; // Unicode character for a star
+  stars.appendChild(star);
+}
+card.appendChild(stars);
+
+// Add rating count from Firebase
+const ratingCount = document.createElement("div");
+ratingCount.classList.add("rating-count");
+
+// Generate a random rating count between 0 and 100,000
+const randomRating = Math.floor(Math.random() * 100001);
+
+// Format the rating count as "1k" if it exceeds 1000
+const formattedRating = randomRating > 1000 ? (randomRating / 1000).toFixed(1) + 'k' : randomRating;
+
+ratingCount.innerText = `(${formattedRating}) 5 star ratings`;
+card.appendChild(ratingCount);
+
+
+        // Add fast delivery sticker with icon
+        const stickerContainer = document.createElement("div");
+  stickerContainer.classList.add("sticker-container");
+
+  const fastDeliverySticker = document.createElement("div");
+  fastDeliverySticker.classList.add("sticker", "fast-delivery");
+  fastDeliverySticker.innerHTML = '... <i class="fas fa-truck"></i> Fast Delivery';
+
+  stickerContainer.appendChild(fastDeliverySticker);
+  card.appendChild(stickerContainer);
+
+
+  
+
+                const desc = document.createElement("p");
+                desc.innerText = product.description;
+                card.appendChild(desc);
+      
+      
+      
+// Add product price
+const price = document.createElement("h4");
+const formattedPrice = parseFloat(product.price).toLocaleString('en-US');
+
+price.innerText = `UGX ${formattedPrice}`;
+card.appendChild(price);
+
+      
+
+
+      
+      
+      // Open the Modal
+      function openModal(img) {
+        document.getElementById("modalImg").src = img.src;
+        document.querySelector(".modal").style.display = "block";
+      }
+      
+      // Close the Modal
+      document.querySelector(".close").addEventListener("click", function() {
+        document.querySelector(".modal").style.display = "none";
+      });
+      
+      
+      
+// Create the "Add to Cart" button
+const addToCartBtn = document.createElement("button");
+addToCartBtn.innerText = "Add to Cart";
+
+// Add Font Awesome shopping cart icon
+const icon = document.createElement("i");
+icon.classList.add("fas", "fa-shopping-cart"); // Assuming you're using Font Awesome
+
+// Append the icon to the button
+addToCartBtn.prepend(icon);
+
+
+
+
+// Declare productPrice outside of addToCart to make it accessible to other functions
+let productPrice;
+// Initialize an object to store totals for each product
+const productTotals = {};
+// Initialize overall total variable
+let total = 0;
+
+function addToCart(product) {
+  // Get the cart items container
+  const cartItemsContainer = document.getElementById("cart-items");
+  // Create a container for the toggle switch
+  const toggleContainer = document.createElement("div");
+  toggleContainer.classList.add("toggle-container");
+
+  // Add title to the toggle
+  const toggleTitle = document.createElement("p");
+  toggleTitle.innerText = "Wholesale";
+  toggleContainer.appendChild(toggleTitle);
+
+ // Create the toggle switch
+ const toggleSwitch = document.createElement("input");
+ toggleSwitch.type = "checkbox";
+ toggleSwitch.classList.add("toggle-switch");
+
+ // Create a loading spinner
+ const loadingSpinner = document.createElement("div");
+ loadingSpinner.classList.add("loading-spinner");
+
+ // Add the toggle switch and spinner to the toggle container
+ toggleContainer.appendChild(toggleSwitch);
+ toggleContainer.appendChild(loadingSpinner);
+
+ toggleSwitch.addEventListener("change", async () => {
+   // Show the loading spinner
+   loadingSpinner.style.display = "inline-block";
+
+   // Fetch the wholesale price asynchronously
+   const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+
+   // Hide the loading spinner
+   loadingSpinner.style.display = "none";
+
+   // Update the price based on the toggle state
+   updatePriceBasedOnToggle(product, toggleSwitch.checked, wholesalePrice);
+ });
+
+
+  // Create a new cart item element
+  const cartItem = document.createElement("div");
+  cartItem.classList.add("cart-item");
+
+  // Create a container for the product details (name, price, quantity, and delete button)
+  const productDetails = document.createElement("div");
+  productDetails.classList.add("product-details");
+  productDetails.appendChild(toggleContainer);
+
+  // Add product name
+  const productName = document.createElement("h5");
+  productName.innerText = product.name;
+  productDetails.appendChild(productName);
+
+  // Add product price
+  productPrice = document.createElement("h4");
+  productPrice.innerText = `UGX ${product.price}`;
+  productPrice.dataset.price = product.price; // Store the price as a data attribute
+  productDetails.appendChild(productPrice);
+
+  // Create a quantity input field
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.value = 1;
+  quantityInput.min = 1;
+  quantityInput.classList.add("quantity-input"); // Add the quantity-input class
+
+  quantityInput.addEventListener("input", () => {
+    // Log the input value to the console
+    console.log("Input value:", quantityInput.value);
+
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+
+    // Call the multiply function with the current input value and displayed price
+    multiplyInputByDisplayedPrice(quantityInput.value, displayedPrice, product.name);
+  });
+
+  productDetails.appendChild(quantityInput);
+
+  // Create a delete button for the cart item
+  const deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete";
+  deleteButton.classList.add("delete-button");
+  deleteButton.addEventListener("click", () => {
+    cartItemsContainer.removeChild(cartItem);
+    updateCartCount(-1);
+    updateCartTotal()
+  });
+  productDetails.appendChild(deleteButton);
+
+  cartItem.appendChild(productDetails);
+
+  // Append the cart item to the cart items container
+  cartItemsContainer.appendChild(cartItem);
+
+  // Update the cart count
+  updateCartCount(1);
+
+  // Show the "Added to Cart" message
+  showAddToCartMessage(product.name);
+
+  // Function to fetch wholesale price from Firebase
+  async function fetchWholesalePriceFromFirebase(productName) {
+    const productsRef = ref(database, "products/electronics");
+    const productSnapshot = await get(child(productsRef, productName));
+
+    if (productSnapshot.exists()) {
+      // Assuming there's a property named 'wholesalePrice' in the product data
+      const wholesalePrice = productSnapshot.val().wholesalePrice;
+
+      // Parse the wholesalePrice as a number
+      return wholesalePrice !== null ? parseFloat(wholesalePrice) : null;
+    }
+
+    // Return a default value or handle the case when the product is not found
+    return null;
+  }
+
+  let originalTotal = 0;
+
+  // Function to update price based on the toggle switch
+  async function updatePriceBasedOnToggle(product, isWholesale) {
+    // Get the displayed product price from innerText
+    const displayedPrice = parseFloat(productPrice.innerText.replace("UGX ", ""));
+  
+    // Calculate the original total based on the current input value and displayed price
+    const originalQuantity = parseInt(quantityInput.value);
+    originalTotal = originalQuantity * displayedPrice;
+  
+    if (isWholesale) {
+      // Fetch wholesale price from Firebase based on the product name
+      const wholesalePrice = await fetchWholesalePriceFromFirebase(product.name);
+  
+      if (wholesalePrice !== null) {
+        productPrice.innerText = `UGX ${wholesalePrice}`;
+        productPrice.dataset.price = wholesalePrice;
+      } else {
+        // Handle the case when wholesale price is not found
+        //console.error(`Wholesale price not found for product: ${product.name}`);
+      }
+    } else {
+      productPrice.innerText = `UGX ${product.price}`;
+      productPrice.dataset.price = product.price;
+    }
+  
+    // Calculate the new total based on the current input value, displayed price, and product name
+    const newQuantity = parseInt(quantityInput.value);
+    const newTotal = newQuantity * parseFloat(productPrice.dataset.price);
+  
+    // Update the total element with the difference
+    updateTotalElement(newTotal - originalTotal);
+  
+    // Log the updated price to the console
+    console.log("Updated Price:", parseFloat(productPrice.dataset.price));
+  }
+  
+  // Function to update the total element
+  function updateTotalElement(result) {
+    const totalPriceElement = document.getElementById("total-price");
+  
+    // Parse the total as a number
+    const total = parseFloat(totalPriceElement.innerText.replace("TOTAL: UGX ", ""));
+  
+    // Display the updated total in the total element
+    totalPriceElement.innerText = "TOTAL: UGX " + (total + result).toFixed(2);
+  
+    // Log the updated total to the console
+    console.log("Updated Total:", total + result);
+  }
+  
+
+// Function to multiply input by displayed price and update the total element
+function multiplyInputByDisplayedPrice(inputValue, displayedPrice, productName) {
+  // Check if inputValue is not empty and is a valid number
+  if (inputValue && !isNaN(inputValue)) {
+    // Calculate the result by multiplying the input by the displayed product price
+    const result = inputValue * displayedPrice;
+
+    // Update the total for this product directly
+    productTotals[productName] = result;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", result);
+  } else {
+    // If inputValue is empty or not a valid number, reset the total for this product
+    productTotals[productName] = 0;
+
+    // Update the overall total directly
+    updateCartTotal();
+
+    // Log the result to the console
+    console.log("Result of multiplication:", 0);
+  }
+}}
+
+// Function to update the total element based on all cart items
+function updateCartTotal() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  let total = 0;
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const cartItem = cartItems[i];
+    const quantityInput = cartItem.querySelector(".product-details .quantity-input");
+    const productPriceElement = cartItem.querySelector(".product-details h4");
+    const quantity = parseInt(quantityInput.value);
+    const price = parseFloat(productPriceElement.dataset.price);
+    const totalForItem = quantity * price;
+
+    total += totalForItem;
+  }
+
+  // Display the overall total in the total element
+  const totalPriceElement = document.getElementById("total-price");
+  totalPriceElement.innerText = "TOTAL: UGX " + total.toFixed(2);
+
+  // Log the updated total to the console
+  console.log("Updated Total:", total);
+}
+
+// Example of using the function
+
+
+
+// Function to update the cart count
+function updateCartCount(count) {
+  const cartCountElement = document.getElementById("cart-count");
+  const currentCount = parseInt(cartCountElement.innerText) || 0;
+  cartCountElement.innerText = currentCount + count;
+}
+
+// Add the event listener to the "Add to Cart" button
+// Add the event listener to the "Add to Cart" button
+addToCartBtn.addEventListener("click", () => {
+    const cart = document.getElementById('cart-container')
+    cart.style.display = 'block';
+  addToCart(product);
+  updateCartTotal();
+
+});
+// Assuming `card` is the element representing the product card
+card.appendChild(addToCartBtn);
+
+// Function to show the "Added to Cart" message
+function showAddToCartMessage(productName) {
+  const messageContainer = document.getElementById("message-container");
+  messageContainer.innerText = `${productName} added to cart`;
+  messageContainer.style.display = "block";
+
+  setTimeout(() => {
+    messageContainer.style.display = "none";
+  }, 3000);
+}
+
+
+
+const openCartBtn = document.getElementById("open-cart-btn");
+const closeCartBtn = document.getElementById("close-cart-btn");
+const cartContent = document.getElementById("cart-content");
+const overlay = document.getElementById('overlay4')
+cartContent.style.display = "none"; // Hide the cart content on load
+
+const body = document.body;
+
+openCartBtn.addEventListener("click", () => {
+  if (cartIsEmpty()) {
+    cartContent.style.display = "none"; // Hide the cart content on load
+
+    // Show a message or perform any desired action when cart is empty
+    return;
+  }
+  overlay.style.display = 'block';
+  cartContent.style.display = "block";
+  openCartBtn.style.display = "none";
+  closeCartBtn.style.display = "inline-block";
+  body.classList.add("no-scroll"); // Add class to disable scrolling
+});
+
+closeCartBtn.style.display = "none"; // Hide the close button initially
+
+closeCartBtn.addEventListener("click", () => {
+  cartContent.style.display = "none";
+  closeCartBtn.style.display = "none";
+  openCartBtn.style.display = "inline-block";
+  overlay.style.display = 'none';
+  body.classList.remove("no-scroll"); // Remove class to enable scrolling
+});
+
+
+function cartIsEmpty() {
+  const cartItems = document.getElementsByClassName("cart-item");
+  return cartItems.length === 0;
+}
+
+
+      // Add card to list only if it's in the viewport
+      if (isInViewportNew(card)) {
+      productsList.appendChild(card);
+    }
+  }
+  loader.style.display = "none";
+}
+
+  // Function to check if an element is in the viewport
+function isInViewportNew(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+
+  
+
+// Function to handle scroll events
+function handleScrollNew() {
+  const productsList = document.getElementById("products-list");
+  const cards = document.querySelectorAll(".card1");
+
+  cards.forEach((card) => {
+    if (isInViewportNew(card) && !productsList.contains(card)) {
+      productsList.appendChild(card);
+    }
+  });
+}
+
+// Attach scroll event listener
+window.addEventListener("scroll", handleScrollNew);
+
+// Function to load cards with retries and backoff strategy
+function loadCardsWithRetryAndBackoff(dataRef, loadFunction, retries = 5, initialDelay = 1000, maxDelay = 16000) {
+  // Retry loading cards with backoff
+  function retryLoad(delay) {
+    setTimeout(() => {
+      // Make the asynchronous call to retrieve data
+      get(dataRef).then((snapshot) => {
+        const data = snapshot.val();
+        // Check if data is retrieved successfully
+        if (data) {
+          loadFunction(data);
+        } else {
+          // Retry with an increased delay if data is not retrieved successfully
+          const nextDelay = Math.min(delay * 2, maxDelay);
+          retryLoad(nextDelay);
+        }
+      }).catch(() => {
+        // Retry with an increased delay if there is an error in retrieving data
+        const nextDelay = Math.min(delay * 2, maxDelay);
+        retryLoad(nextDelay);
+      });
+    }, delay);
+  }
+
+  // Initial attempt to retrieve data
+  retryLoad(initialDelay);
+}
+
+// Call the function to load cards with retries and backoff strategy for electronics
+loadCardsWithRetryAndBackoff(electronicsRef, loadCardsNew);
+
+
+
+
+const slider = document.querySelector('.image-slider');
+const images = slider.querySelectorAll('img');
+const interval = 3000; // Change image every 3 seconds
+
+let index = 0;
+setInterval(() => {
+  images[index].classList.remove('active');
+  index = (index + 1) % images.length;
+  images[index].classList.add('active');
+}, interval);
+
+const backToTopBtn = document.getElementById('backToTopBtn');
+
+window.addEventListener('scroll', () => {
+    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+        backToTopBtn.style.display = 'block';
+    } else {
+        backToTopBtn.style.display = 'none';
+    }
+});
+
+backToTopBtn.addEventListener('click', () => {
+    // Use smooth scrolling to scroll to the top
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
